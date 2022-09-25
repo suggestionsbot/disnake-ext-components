@@ -112,6 +112,7 @@ class BaseListener(abc.ABC, t.Generic[P, T, types_.InteractionT]):
             except Exception as e:
                 client = self.parent.bot
                 client.dispatch("button_error", args[0], e)
+                return
 
         return await self.callback(*args, **kwargs)
 
