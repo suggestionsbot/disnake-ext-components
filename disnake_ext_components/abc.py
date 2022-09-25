@@ -111,7 +111,7 @@ class BaseListener(abc.ABC, t.Generic[P, T, types_.InteractionT]):
                 return await self.callback(self.parent, *args, **kwargs)
             except Exception as e:
                 client = self.parent.bot
-                client.dispatch("slash_command_error", args[0], e)
+                client.dispatch("button_error", args[0], e)
 
         return await self.callback(*args, **kwargs)
 
