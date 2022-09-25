@@ -107,7 +107,12 @@ class BaseListener(abc.ABC, t.Generic[P, T, types_.InteractionT]):
 
     async def __call__(self, *args: t.Any, **kwargs: t.Any) -> T:
         if self.parent:
-            return await self.callback(self.parent, *args, **kwargs)
+            try:
+                return await self.callback(self.parent, *args, **kwargs)
+            except Exception as e:
+                client = self.parent.bot
+                client.dispatch("slash_command_error", args[0], e)
+
         return await self.callback(*args, **kwargs)
 
     def error(
