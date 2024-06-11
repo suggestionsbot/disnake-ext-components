@@ -5,7 +5,8 @@ from __future__ import annotations
 import typing
 
 import disnake
-from disnake.ext.components.impl.parser import base, helpers, snowflake
+from disnake.ext.components.impl.parser import base as parser_base
+from disnake.ext.components.impl.parser import helpers, snowflake
 
 __all__: typing.Sequence[str] = (
     "GetRoleParser",
@@ -13,76 +14,105 @@ __all__: typing.Sequence[str] = (
 )
 
 
-def _get_role(
-    source: typing.Union[
-        helpers.GuildAware,
-        helpers.MessageAware,
-        helpers.ChannelAware,
-    ],
-    argument: str,
-) -> disnake.Role:
-    if isinstance(source, helpers.GuildAware):
-        guild = source.guild
-    elif isinstance(source, helpers.MessageAware):
-        guild = source.message.guild
-    else:
-        guild = getattr(source.channel, "guild", None)
+class GetRoleParser(  # noqa: D101
+    parser_base.Parser[disnake.Role],
+    is_default_for=(disnake.Role,),
+):
+    # <<docstring inherited from parser_api.Parser>>
 
-    if guild is None:
-        msg = (
-            "Impossible to get a role from an"
-            " interaction that doesn't come from a guild."
-        )
-        raise TypeError(msg)
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
 
-    role = guild.get_role(int(argument))
-    if role is None:
+    def loads(  # noqa: D102
+        self,
+        source: typing.Union[
+            helpers.GuildAware,
+            helpers.MessageAware,
+            helpers.ChannelAware,
+        ],
+        argument: str,
+    ) -> disnake.Role:
+        # <<docstring inherited from parser_api.Parser>>
+
+        guild = None
+        if isinstance(source, helpers.GuildAware):
+            guild = source.guild
+
+        if guild is None and isinstance(source, helpers.MessageAware):
+            guild = source.message.guild
+
+        if (
+            guild is None
+            and isinstance(source, helpers.ChannelAware)
+            and isinstance(source.channel, helpers.GuildAware)
+        ):
+            guild = source.channel.guild
+
+        if guild is None:
+            msg = "Cannot get a role from an object that doesn't reference a guild."
+            raise TypeError(msg)
+
+        role = guild.get_role(int(argument))
+        if role is not None:
+            return role
+
         msg = f"Could not find a role with id {argument!r}."
         raise LookupError(msg)
 
-    return role
 
+class RoleParser(  # noqa: D101
+    parser_base.Parser[disnake.Role],
+    is_default_for=(disnake.Role,),
+):
+    # <<docstring inherited from parser_api.Parser>>
 
-async def _fetch_role(
-    source: typing.Union[
-        helpers.GuildAware,
-        helpers.MessageAware,
-        helpers.ChannelAware,
-    ],
-    argument: str,
-) -> disnake.Role:
-    if isinstance(source, helpers.GuildAware):
-        guild = source.guild
-    elif isinstance(source, helpers.MessageAware):
-        guild = source.message.guild
-    else:
-        guild = getattr(source.channel, "guild", None)
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
 
-    if guild is None:
-        msg = (
-            "Impossible to fetch a role from an"
-            " interaction that doesn't come from a guild."
-        )
-        raise TypeError(msg)
+    async def loads(  # noqa: D102
+        self,
+        source: typing.Union[
+            helpers.GuildAware,
+            helpers.MessageAware,
+            helpers.ChannelAware,
+        ],
+        argument: str,
+    ) -> disnake.Role:
+        # <<docstring inherited from parser_api.Parser>>
 
-    id_ = int(argument)
-    role = (
-        guild.get_role(int(argument))
-        or next((role for role in await guild.fetch_roles() if role.id == id_), None)
-    )  # fmt: skip
+        guild = None
+        if isinstance(source, helpers.GuildAware):
+            guild = source.guild
 
-    # a role id coming from a custom_id could be of a deleted role object
-    # so we're handling that possibility
-    if role is None:
-        msg = f"Could not find a role with id {argument!r}."
-        raise LookupError(msg)
+        if guild is None and isinstance(source, helpers.MessageAware):
+            guild = source.message.guild
 
-    return role
+        if (
+            guild is None
+            and isinstance(source, helpers.ChannelAware)
+            and isinstance(source.channel, helpers.GuildAware)
+        ):
+            guild = source.channel.guild
 
+        if guild is None:
+            msg = "Cannot get a role from an object that doesn't reference a guild."
+            raise TypeError(msg)
 
-GetRoleParser = base.Parser.from_funcs(
-    _get_role, snowflake.snowflake_dumps, is_default_for=(disnake.Role,)
-)
-RoleParser = base.Parser.from_funcs(
-    _fetch_role, snowflake.snowflake_dumps, is_default_for=(disnake.Role,)
-)
+        id_ = int(argument)
+        role = guild.get_role(id_)
+        if role is not None:
+            return role
+
+        for role in await guild.fetch_roles():
+            if role.id == id_:
+                return role
+
+        # a role id coming from a custom_id could be of a deleted role object
+        # so we're handling that possibility
+        if role is None:
+            msg = f"Could not find a role with id {argument!r}."
+            raise LookupError(msg)
+
+        return role

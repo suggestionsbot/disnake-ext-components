@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import enum
 import logging
 import sys
 import typing
@@ -15,12 +14,12 @@ from disnake.ext import commands
 from disnake.ext.components import fields
 from disnake.ext.components import interaction as interaction_impl
 from disnake.ext.components.api import component as component_api
-from disnake.ext.components.internal import reference
+from disnake.ext.components.internal import omit, reference
 
 if typing.TYPE_CHECKING:
     import typing_extensions
 
-__all__: typing.Sequence[str] = ("ComponentManager", "get_manager")
+__all__: typing.Sequence[str] = ("ComponentManager", "get_manager", "check_manager")
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,21 +56,6 @@ ComponentType = typing.Type[component_api.RichComponent]
 ComponentTypeT = typing.TypeVar("ComponentTypeT", bound=ComponentType)
 
 
-class NotSetType(enum.Enum):
-    """Typehint for sentinel value."""
-
-    NotSet = enum.auto()
-    """Sentinel value to distinguish whether or not None was explicitly passed."""
-
-
-NotSet = NotSetType.NotSet
-"""Sentinel value to distinguish whether or not None was explicitly passed."""
-
-
-NotSetOr = typing.Union[typing.Literal[NotSet], T]
-NotSetNoneOr = typing.Optional[NotSetOr[T]]
-
-
 def _to_ui_component(
     component: typing.Union[disnake.Button, disnake.BaseSelectMenu],
 ) -> disnake.ui.MessageUIComponent:
@@ -90,10 +74,6 @@ def _to_ui_component(
 
     msg = f"Expected a message component type, got {type(component).__name__!r}."
     raise TypeError(msg)
-
-
-def _is_set(obj: NotSetNoneOr[T]) -> typing_extensions.TypeGuard[typing.Optional[T]]:
-    return obj is not NotSet
 
 
 def _minimise_count(count: int) -> str:
@@ -233,6 +213,7 @@ class ComponentManager(component_api.ComponentManager):
     bot: Optional[:class:`commands.Bot`]
         The bot to which to register this manager. This can be specified at any
         point through :meth:`.add_to_bot`.
+
     """
 
     __slots__: typing.Sequence[str] = (
@@ -341,13 +322,15 @@ class ComponentManager(component_api.ComponentManager):
         return get_manager(root)
 
     def config(
-        self, count: NotSetNoneOr[bool] = NotSet, sep: NotSetNoneOr[str] = NotSet
+        self,
+        count: omit.OmittedNoneOr[bool] = omit.Omitted,
+        sep: omit.OmittedNoneOr[str] = omit.Omitted,
     ) -> None:
         """Set configuration options on this manager."""
-        if _is_set(count):
+        if not omit.is_omitted(count):
             self._count = count
 
-        if _is_set(sep):
+        if not omit.is_omitted(sep):
             self._sep = sep
 
     def make_identifier(self, component_type: ComponentType) -> str:  # noqa: D102
@@ -369,7 +352,7 @@ class ComponentManager(component_api.ComponentManager):
         return name, params
 
     def increment(self) -> str:  # noqa: D102
-        count = _minimise_count(self.count)
+        count = _minimise_count(self._counter)
 
         self._counter += 1
         if self._counter > 24:
@@ -396,15 +379,13 @@ class ComponentManager(component_api.ComponentManager):
     ) -> typing.Optional[component_api.RichComponent]:
         # <<docstring inherited from api.components.ComponentManager>>
         if isinstance(interaction, disnake.MessageInteraction):
-            component = await self.parse_raw_component(
+            return await self.parse_raw_component(
                 interaction.component,
                 interaction,
             )
 
         else:
             raise NotImplementedError
-
-        return component
 
     async def parse_raw_component(
         self,
@@ -438,6 +419,7 @@ class ComponentManager(component_api.ComponentManager):
         :obj:`None`:
             The provided component could not be parsed into a rich component
             that is registered to this manager.
+
         """
         custom_id = component.custom_id
         if not custom_id:
@@ -527,9 +509,9 @@ class ComponentManager(component_api.ComponentManager):
             These objects share the same component instances, so any changes
             made to components inside the separate sequence will also reflect
             on the nested structure.
+
         """  # noqa: E501
         new_rows: typing.List[typing.List[interaction_impl.MessageComponents]] = []
-        new_row: typing.List[interaction_impl.MessageComponents]
         rich_components: typing.List[component_api.RichComponent] = []
 
         reference_obj = reference.create_reference(
@@ -537,7 +519,8 @@ class ComponentManager(component_api.ComponentManager):
         )
 
         for row in message.components:
-            new_rows.append(new_row := [])
+            new_row: typing.List[interaction_impl.MessageComponents] = []
+            new_rows.append(new_row)
 
             for component in row.children:
                 new_component = await self.parse_raw_component(component, reference_obj)
@@ -740,6 +723,7 @@ class ComponentManager(component_api.ComponentManager):
         -------
         Callable[[:class:`RichComponent`, :class:`disnake.Interaction`], AsyncGenerator[None, None]]
             The function that was just registered.
+
         """  # noqa: E501
         self.wrap_callback = contextlib.asynccontextmanager(func)
         return func
@@ -795,6 +779,7 @@ class ComponentManager(component_api.ComponentManager):
         -------
         Callable[[:class:`RichComponent`, :class:`disnake.Interaction`, :class:`Exception`], None]
             The function that was just registered.
+
         """  # noqa: E501
         self.handle_exception = func
         return func
@@ -853,10 +838,10 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        label: NotSetNoneOr[str] = NotSet,
-        style: NotSetOr[disnake.ButtonStyle] = NotSet,
-        emoji: NotSetNoneOr[component_api.AnyEmoji] = NotSet,
-        disabled: NotSetOr[bool] = NotSet,
+        label: omit.Omissible[typing.Optional[str]] = omit.Omitted,
+        style: omit.Omissible[disnake.ButtonStyle] = omit.Omitted,
+        emoji: omit.Omissible[typing.Optional[component_api.AnyEmoji]] = omit.Omitted,
+        disabled: omit.Omissible[bool] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichButton:
         """Make an instance of the button class with the provided identifier.
@@ -893,14 +878,15 @@ class ComponentManager(component_api.ComponentManager):
             The provided identifier belongs to a component that is not a button.
         :class:`Exception`
             Any exception raised during button instantiation is propagated as-is.
+
         """  # noqa: E501
-        if label is not NotSet:
+        if label is not omit.Omitted:
             kwargs["label"] = label
-        if style is not NotSet:
+        if style is not omit.Omitted:
             kwargs["style"] = style
-        if emoji is not NotSet:
+        if emoji is not omit.Omitted:
             kwargs["emoji"] = emoji
-        if disabled is not NotSet:
+        if disabled is not omit.Omitted:
             kwargs["disabled"] = disabled
 
         manager = get_manager(_ROOT) if as_root else self
@@ -924,11 +910,11 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        placeholder: NotSetNoneOr[str] = NotSet,
-        min_values: NotSetOr[int] = NotSet,
-        max_values: NotSetOr[int] = NotSet,
-        disabled: NotSetOr[bool] = NotSet,
-        options: NotSetOr[typing.List[disnake.SelectOption]] = NotSet,
+        placeholder: omit.Omissible[str | None] = omit.Omitted,
+        min_values: omit.Omissible[int] = omit.Omitted,
+        max_values: omit.Omissible[int] = omit.Omitted,
+        disabled: omit.Omissible[bool] = omit.Omitted,
+        options: omit.Omissible[typing.List[disnake.SelectOption]] = omit.Omitted,
         **kwargs: object,
     ) -> component_api.RichSelect:
         """Make an instance of the string select class with the provided identifier.
@@ -969,18 +955,19 @@ class ComponentManager(component_api.ComponentManager):
             The provided identifier belongs to a component that is not a string select.
         :class:`Exception`
             Any exception raised during button instantiation is propagated as-is.
+
         """
         # NOTE: This currently only supports StringSelects
 
-        if placeholder is not NotSet:
+        if placeholder is not omit.Omitted:
             kwargs["placeholder"] = placeholder
-        if min_values is not NotSet:
+        if min_values is not omit.Omitted:
             kwargs["min_values"] = min_values
-        if max_values is not NotSet:
+        if max_values is not omit.Omitted:
             kwargs["max_values"] = max_values
-        if disabled is not NotSet:
+        if disabled is not omit.Omitted:
             kwargs["disabled"] = disabled
-        if options is not NotSet:
+        if options is not omit.Omitted:
             kwargs["options"] = options
 
         manager = get_manager(_ROOT) if as_root else self
@@ -1005,7 +992,7 @@ _MANAGER_STORE: typing.Final[typing.Dict[str, ComponentManager]] = {}
 
 def _recurse_parents(manager: ComponentManager) -> typing.Iterator[ComponentManager]:
     yield manager
-    while manager := manager.parent:  # pyright: ignore[reportGeneralTypeIssues]
+    while manager := manager.parent:  # pyright: ignore[reportAssignmentType]
         yield manager
 
 
@@ -1057,6 +1044,7 @@ def get_manager(name: typing.Optional[str] = None) -> ComponentManager:
         A component manager with the desired name. If a component manager with
         this name already existed before calling this function, that same
         manager is returned. Otherwise, a new manager is created.
+
     """
     if name is None:
         # TODO: Maybe use a sentinel:
@@ -1075,3 +1063,24 @@ def get_manager(name: typing.Optional[str] = None) -> ComponentManager:
         parent.children.add(manager)
 
     return manager
+
+
+def check_manager(name: str) -> bool:
+    """Check if a manager with the provided name exists.
+
+    .. note::
+        Unlike :func:`get_manager`, this function will not create missing
+        managers.
+
+    Parameters
+    ----------
+    name:
+        The name to check.
+
+    Returns
+    -------
+    :class:`bool`
+        Whether a manager with the provided name exists.
+
+    """
+    return name in _MANAGER_STORE

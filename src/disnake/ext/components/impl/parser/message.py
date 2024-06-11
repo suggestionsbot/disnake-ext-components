@@ -5,7 +5,8 @@ from __future__ import annotations
 import typing
 
 import disnake
-from disnake.ext.components.impl.parser import base, helpers, snowflake
+from disnake.ext.components.impl.parser import base as parser_base
+from disnake.ext.components.impl.parser import helpers, snowflake
 
 __all__: typing.Sequence[str] = (
     "GetMessageParser",
@@ -22,42 +23,60 @@ AnyChannel = typing.Union[
 ]
 
 
-def _get_message(
-    source: typing.Union[helpers.BotAware, helpers.MessageAware],
-    argument: str,
-) -> disnake.Message:
-    if isinstance(source, helpers.BotAware):
-        message = source.bot.get_message(int(argument))
-        if message:
-            return message
+class GetMessageParser(  # noqa: D101
+    parser_base.Parser[disnake.Message], is_default_for=(disnake.Message,)
+):
+    # <<docstring inherited from parser_api.Parser>>
 
-        if isinstance(source, helpers.MessageAware):
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
+
+    def loads(  # noqa: D102
+        self,
+        source: typing.Union[helpers.BotAware, helpers.MessageAware],
+        argument: str,
+    ) -> disnake.Message:
+        if isinstance(source, helpers.BotAware):
+            message = source.bot.get_message(int(argument))
+            if message:
+                return message
+
+            if isinstance(source, helpers.MessageAware):
+                return source.message
+
+        else:
             return source.message
 
-    else:
-        return source.message
-
-    msg = f"Could not find a message with id {argument!r}."
-    raise LookupError(msg)
+        msg = f"Could not find a message with id {argument!r}."
+        raise LookupError(msg)
 
 
-async def _fetch_message(inter: disnake.Interaction, argument: str) -> disnake.Message:
-    return (
-        inter.bot.get_message(int(argument))
-        or await inter.channel.fetch_message(int(argument))
-    )  # fmt: skip
+class MessageParser(  # noqa: D101
+    parser_base.Parser[disnake.Message],
+    is_default_for=(disnake.Message,),
+):
+    # <<docstring inherited from parser_api.Parser>>
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.dumps = snowflake.snowflake_dumps
 
-GetMessageParser = base.Parser.from_funcs(
-    _get_message, snowflake.snowflake_dumps, is_default_for=(disnake.Message,)
-)
-MessageParser = base.Parser.from_funcs(
-    _fetch_message, snowflake.snowflake_dumps, is_default_for=(disnake.Message,)
-)
+    async def loads(  # noqa: D102
+        self, source: helpers.ChannelAware, argument: str
+    ) -> disnake.Message:
+        # <<docstring inherited from parser_api.Parser>>
+
+        if isinstance(source, helpers.BotAware):
+            message = source.bot.get_message(int(argument))
+            if message:
+                return message
+
+        return await source.channel.fetch_message(int(argument))
 
 
 class PartialMessageParser(  # noqa: D101
-    base.Parser[disnake.PartialMessage], is_default_for=(disnake.PartialMessage,)
+    parser_base.Parser[disnake.PartialMessage], is_default_for=(disnake.PartialMessage,)
 ):
     # <<docstring inherited from parser_api.Parser>>
 
@@ -66,10 +85,10 @@ class PartialMessageParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, inter: disnake.Interaction, argument: str
+        self, source: helpers.ChannelAware, argument: str
     ) -> disnake.PartialMessage:
         # <<docstring inherited from parser_api.Parser>>
 
         return disnake.PartialMessage(
-            channel=self.channel or inter.channel, id=int(argument)
+            channel=self.channel or source.channel, id=int(argument)
         )
