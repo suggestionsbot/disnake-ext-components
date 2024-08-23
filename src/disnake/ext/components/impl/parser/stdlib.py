@@ -348,7 +348,7 @@ def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_Collec
         )
         raise TypeError(msg)
 
-    if not getattr(type_, "_is_protocol", False) and not inspect.isabstract(type_):
+    if not typing_extensions.is_protocol(type_) and not inspect.isabstract(type_):
         # Concrete type, return as-is.
         return type_
 

@@ -42,10 +42,6 @@ def _is_attrs_pass(namespace: typing.Dict[str, typing.Any]) -> bool:
     return namespace.get("__attrs_attrs__") is not None
 
 
-def _is_protocol(cls: typing.Type[typing.Any]) -> bool:
-    return getattr(cls, "_is_protocol", False)
-
-
 def _determine_parser(
     attribute: _AnyAttr,
     overwrite: typing.Optional[_AnyAttr],
@@ -114,19 +110,13 @@ def _is_custom_id_field(field: _AnyAttr) -> bool:
 def _field_transformer(
     cls: type, attributes: typing.List[_AnyAttr]
 ) -> typing.List[_AnyAttr]:
-    is_concrete = not _is_protocol(cls)
     super_attributes: typing.Dict[str, _AnyAttr] = (
         {field.name: field for field in fields.get_fields(cls)} if attr.has(cls) else {}
     )
 
     finalised_attributes: typing.List[_AnyAttr] = []
     for attribute in attributes:
-        # Fields only need a parser if
-        # - The component is concrete,
-        # - The field is a custom-id field.
-        # In case of an overwrite, we check the field type of the super-field.
         super_attribute = super_attributes.get(attribute.name)
-        needs_parser = is_concrete and _is_custom_id_field(super_attribute or attribute)
 
         # Ensure all forward-references are evaluated.
         evolved = attribute.evolve(type=_eval_type(cls, attribute.type))
@@ -149,7 +139,14 @@ def _field_transformer(
         metadata[fields.FieldMetadata.PARSER] = _determine_parser(
             evolved,
             super_attribute,
-            required=needs_parser,
+            # Fields only need a parser if
+            # - The component is concrete,
+            # - The field is a custom-id field.
+            # In case of an overwrite, we check the field type of the super-field.
+            required=(
+                not typing_extensions.is_protocol(cls)
+                and _is_custom_id_field(super_attribute or attribute)
+            ),
         )
 
         # Apply finalised metadata.
@@ -207,7 +204,7 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
             field_transformer=_field_transformer,
         )
 
-        if _is_protocol(cls):
+        if typing_extensions.is_protocol(cls):
             cls.factory = factory_impl.NoopFactory.from_component(cls)
             return cls
 
