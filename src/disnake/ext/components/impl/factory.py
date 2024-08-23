@@ -33,7 +33,7 @@ class ComponentFactory(
     component factory can simply be created using :meth:`from_component`.
     """
 
-    parsers: ParserMapping = attr.field(converter=types.MappingProxyType)
+    parsers: ParserMapping = attr.field(converter=types.MappingProxyType)  # type: ignore
     component: typing.Type[component_api.ComponentT]
 
     @classmethod
@@ -54,7 +54,10 @@ class ComponentFactory(
 
             parsers[field.name] = parser
 
-        return cls(parsers, component)
+        return cls(
+            parsers,
+            typing.cast(typing.Type[component_api.ComponentT], component),
+        )
 
     async def loads_param(
         self,

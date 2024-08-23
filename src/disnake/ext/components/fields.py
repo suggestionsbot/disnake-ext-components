@@ -18,6 +18,12 @@ __all__: typing.Sequence[str] = ("field",)
 _T = typing_extensions.TypeVar("_T", default=typing.Any)
 
 
+# Workaround for attrs typing, TODO: remove when fixed.
+import attr._make  # noqa: E402
+
+NOTHING: typing_extensions.TypeAlias = typing.Literal[attr._make._Nothing.NOTHING]  # type: ignore
+
+
 class FieldMetadata(enum.Enum):
     """Enum containing keys for field metadata."""
 
@@ -163,7 +169,7 @@ def get_fields(
 
 
 def field(
-    default: typing.Union[_T, typing.Literal[attrs.NOTHING]] = attrs.NOTHING,
+    default: typing.Union[_T, typing.Literal[NOTHING]] = attrs.NOTHING,
     *,
     parser: typing.Optional[parser_api.Parser[_T]] = None,
 ) -> _T:

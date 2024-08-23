@@ -385,7 +385,7 @@ class ComponentFactory(typing.Protocol[ComponentT]):
     @classmethod
     def from_component(
         cls,
-        component: typing.Type[RichComponent],
+        component: typing.Type[ComponentT],
         /,
     ) -> typing_extensions.Self:
         """Create a component factory from the provided component.

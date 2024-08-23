@@ -52,8 +52,8 @@ ExceptionHandlerFuncT = typing.TypeVar(
     "ExceptionHandlerFuncT", bound=ExceptionHandlerFunc
 )
 
+ComponentT = typing.TypeVar("ComponentT", bound=component_api.RichComponent)
 ComponentType = typing.Type[component_api.RichComponent]
-ComponentTypeT = typing.TypeVar("ComponentTypeT", bound=ComponentType)
 
 
 def _to_ui_component(
@@ -542,8 +542,8 @@ class ComponentManager(component_api.ComponentManager):
     # Identifier and component: function call, return component
     @typing.overload
     def register(
-        self, component_type: ComponentTypeT, *, identifier: str | None = None
-    ) -> ComponentTypeT:
+        self, component_type: typing.Type[ComponentT], *, identifier: str | None = None
+    ) -> typing.Type[ComponentT]:
         ...
 
     # Only identifier: nested decorator, return callable that registers and
@@ -551,17 +551,17 @@ class ComponentManager(component_api.ComponentManager):
     @typing.overload
     def register(
         self, *, identifier: str | None = None
-    ) -> typing.Callable[[ComponentTypeT], ComponentTypeT]:
+    ) -> typing.Callable[[typing.Type[ComponentT]], typing.Type[ComponentT]]:
         ...
 
     def register(
         self,
-        component_type: typing.Optional[ComponentTypeT] = None,
+        component_type: typing.Optional[typing.Type[ComponentT]] = None,
         *,
         identifier: typing.Optional[str] = None,
     ) -> typing.Union[
-        ComponentTypeT,
-        typing.Callable[[ComponentTypeT], ComponentTypeT],
+        typing.Type[ComponentT],
+        typing.Callable[[typing.Type[ComponentT]], typing.Type[ComponentT]],
     ]:
         """Register a component to this component manager.
 
@@ -570,17 +570,17 @@ class ComponentManager(component_api.ComponentManager):
         if component_type is not None:
             return self.register_component(component_type, identifier=identifier)
 
-        def wrapper(component_type: ComponentTypeT) -> ComponentTypeT:
+        def wrapper(component_type: typing.Type[ComponentT]) -> typing.Type[ComponentT]:
             return self.register_component(component_type, identifier=identifier)
 
         return wrapper
 
     def register_component(  # noqa: D102
         self,
-        component_type: ComponentTypeT,
+        component_type: typing.Type[ComponentT],
         *,
         identifier: typing.Optional[str] = None,
-    ) -> ComponentTypeT:
+    ) -> typing.Type[ComponentT]:
         # <<docstring inherited from api.components.ComponentManager>>
         resolved_identifier = identifier or self.make_identifier(component_type)
         module_data = _ModuleData.from_object(component_type)
