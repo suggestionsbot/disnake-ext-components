@@ -14,6 +14,7 @@ import subprocess
 import sys
 import typing
 
+import disnake
 import sphinx.config
 from disnake.ext import commands, components
 
@@ -143,24 +144,14 @@ util.apply_patch()
 
 typehints_document_rtype = False
 typehints_use_rtype = False
-simplify_optional_unions = False
+simplify_optional_unions = True
+always_use_bars_union = True
 
 
-# Customise display for specific types.
-import attrs
-import disnake
-from disnake.ext.components import interaction
-from disnake.ext.components.api import component, parser
-
-util.make_generic(attrs.Attribute)
-
-
+# # Customise display for specific types.
 aliases: typing.Dict[object, str] = {
     # Idk why this is needed, but it is...
     disnake.ButtonStyle: ":class:`~disnake.ButtonStyle`",
-    component.ComponentT: ":data:`~.ComponentT`",  # pyright: ignore
-    parser.ParserType: ":data:`.ParserType`",  # pyright: ignore
-    interaction.MessageComponents: ":data:`.Components`",
 }
 
 

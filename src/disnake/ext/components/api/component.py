@@ -149,8 +149,9 @@ class ComponentManager(typing.Protocol):
     on listener functionality, component managers are incompatible with
     :class:`disnake.Client`-classes.
 
-    To register a component to a component manager, use :meth:`register`.
-    Without registering your components, they will remain unresponsive.
+    To register a component to a component manager, use
+    :meth:`register_component`. Without registering your components, they will
+    remain unresponsive.
     """
 
     __slots__: typing.Sequence[str] = ()

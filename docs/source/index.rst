@@ -23,7 +23,6 @@ Getting started
    :maxdepth: 1
 
    installing
-   API Reference </api_ref/index.rst>
    Quickstart Guide <quickstart/index>
    Examples </examples/index.rst>
 

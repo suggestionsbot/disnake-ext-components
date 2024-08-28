@@ -8,6 +8,7 @@ import typing
 
 import sphinx.config
 import sphinx_autodoc_typehints as original
+from sphinx.util import inspect as sphinx_inspect
 
 __all__ = (
     "get_module_path",
@@ -77,7 +78,7 @@ def make_generic(cls: type) -> None:
     cls.__class_getitem__ = __class_getitem__  # pyright: ignore
 
 
-def format_annotation(  # noqa: PLR0911, PLR0912
+def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
     annotation: typing.Any, config: sphinx.config.Config  # noqa: ANN401
 ) -> str:
     """Format the annotation."""
@@ -96,6 +97,9 @@ def format_annotation(  # noqa: PLR0911, PLR0912
 
     if isinstance(annotation, tuple):
         return original.format_internal_tuple(annotation, config)  # pyright: ignore
+
+    if isinstance(annotation, sphinx_inspect.TypeAliasForwardRef):
+        return str(annotation)
 
     try:
         module = original.get_annotation_module(annotation)
@@ -123,6 +127,13 @@ def format_annotation(  # noqa: PLR0911, PLR0912
     args_format = "\\[{}]"
     formatted_args: str = ""
 
+    always_use_bars_union: bool = getattr(config, "always_use_bars_union", True)
+    is_bars_union = full_name == "types.UnionType" or (
+        always_use_bars_union and type(annotation).__qualname__ == "_UnionGenericAlias"
+    )
+    if is_bars_union:
+        full_name = ""
+
     # Some types require special handling
     if full_name == "typing.NewType":
         args_format = f"\\(``{annotation.__name__}``, {{}})"
@@ -136,15 +147,20 @@ def format_annotation(  # noqa: PLR0911, PLR0912
     elif full_name == "typing.Optional":
         args = tuple(x for x in args if x is not NoneType)
 
-    # NOTE: Modified to always use pipe unions
     elif full_name in ("typing.Union", "types.UnionType") and NoneType in args:
-        if len(args) == 2 or not getattr(config, "simplify_optional_unions", True):
+        if len(args) == 2:
             full_name = "typing.Optional"
-            formatted_args = args_format.format(
-                " | ".join(
-                    format_annotation(x, config) for x in args if x is not NoneType
-                )
+            role = "data"
+            args = tuple(x for x in args if x is not type(None))
+        else:
+            simplify_optional_unions: bool = getattr(
+                config, "simplify_optional_unions", True
             )
+            if not simplify_optional_unions:
+                full_name = "typing.Optional"
+                role = "data"
+                args_format = f"\\[:py:data:`{prefix}typing.Union`\\[{{}}]]"
+                args = tuple(x for x in args if x is not type(None))
 
     elif (
         full_name in ("typing.Callable", "collections.abc.Callable")
@@ -157,7 +173,7 @@ def format_annotation(  # noqa: PLR0911, PLR0912
     elif full_name == "typing.Literal":
         formatted_args = f"\\[{', '.join(f'``{arg!r}``' for arg in args)}]"
 
-    elif full_name in ("typing.Union", "types.UnionType"):
+    elif is_bars_union:
         return " | ".join([format_annotation(arg, config) for arg in args])
 
     # TODO: Maybe figure out some way of having Self actually link to the class.
@@ -172,7 +188,8 @@ def format_annotation(  # noqa: PLR0911, PLR0912
             fmt = [format_annotation(arg, config) for arg in args]
         formatted_args = args_format.format(", ".join(fmt))
 
-    return f":py:{role}:`{prefix}{full_name}`{formatted_args}"
+    escape = "\\ " if formatted_args else ""
+    return f":py:{role}:`{prefix}{full_name}`{escape}{formatted_args}"
 
 
 def apply_patch() -> None:
