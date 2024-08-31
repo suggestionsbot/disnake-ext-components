@@ -138,9 +138,9 @@ class PyAttributeTable(SphinxDirective):
         return modulename, name
 
     def run(self) -> typing.List[nodes.Node]:
-        content = typing.cast(str, self.arguments[0]).strip()
+        content: str = self.arguments[0].strip()  # type: ignore
         node = attributetableplaceholder("")
-        modulename, name = self.parse_name(content)
+        modulename, name = self.parse_name(content)  # type: ignore
         node["python-doc"] = self.env.docname
         node["python-module"] = modulename
         node["python-class"] = name
