@@ -574,25 +574,25 @@ dates = ["pytz (>=2019.1)"]
 
 [[package]]
 name = "enum-tools"
-version = "0.10.0"
+version = "0.12.0"
 description = "Tools to expand Python's enum module."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "enum_tools-0.10.0-py3-none-any.whl", hash = "sha256:87f4e8216468e53f2920d2e016dc18eea0972b0b6c1eea65756fbc331a3113d2"},
-    {file = "enum_tools-0.10.0.tar.gz", hash = "sha256:777dc3cfb4314780bb9ca2460b518be58c3f29e13bd77b33badead4c2c136976"},
+    {file = "enum_tools-0.12.0-py3-none-any.whl", hash = "sha256:d69b019f193c7b850b17d9ce18440db7ed62381571409af80ccc08c5218b340a"},
+    {file = "enum_tools-0.12.0.tar.gz", hash = "sha256:13ceb9376a4c5f574a1e7c5f9c8eb7f3d3fbfbb361cc18a738df1a58dfefd460"},
 ]
 
 [package.dependencies]
 pygments = ">=2.6.1"
-sphinx = {version = ">=3.2.0", optional = true, markers = "extra == \"sphinx\""}
+sphinx = {version = ">=3.4.0", optional = true, markers = "extra == \"sphinx\""}
 sphinx-jinja2-compat = {version = ">=0.1.1", optional = true, markers = "extra == \"sphinx\""}
 sphinx-toolbox = {version = ">=2.16.0", optional = true, markers = "extra == \"sphinx\""}
 typing-extensions = ">=3.7.4.3"
 
 [package.extras]
-all = ["sphinx (>=3.2.0)", "sphinx-jinja2-compat (>=0.1.1)", "sphinx-toolbox (>=2.16.0)"]
-sphinx = ["sphinx (>=3.2.0)", "sphinx-jinja2-compat (>=0.1.1)", "sphinx-toolbox (>=2.16.0)"]
+all = ["sphinx (>=3.4.0)", "sphinx-jinja2-compat (>=0.1.1)", "sphinx-toolbox (>=2.16.0)"]
+sphinx = ["sphinx (>=3.4.0)", "sphinx-jinja2-compat (>=0.1.1)", "sphinx-toolbox (>=2.16.0)"]
 
 [[package]]
 name = "filelock"
@@ -698,7 +698,7 @@ files = [
 
 [[package]]
 name = "furo"
-version = "2023.8.19.dev1"
+version = "2024.8.6.dev1"
 description = "A clean customisable Sphinx documentation theme."
 optional = false
 python-versions = ">=3.8"
@@ -708,14 +708,14 @@ develop = false
 [package.dependencies]
 beautifulsoup4 = "*"
 pygments = ">=2.7"
-sphinx = ">=6.0,<8.0"
-sphinx-basic-ng = "*"
+sphinx = ">=6.0,<9.0"
+sphinx-basic-ng = ">=1.0.0.beta2"
 
 [package.source]
 type = "git"
 url = "https://github.com/sharp-eyes/furo"
 reference = "HEAD"
-resolved_reference = "bf633441ce0d34c18f4a403711e0eb31968285a5"
+resolved_reference = "67228c432eb97cbf8f8224da85f9d9afda0ef623"
 
 [[package]]
 name = "html5lib"
@@ -2112,4 +2112,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "492969be567069a447894ba3976d3b82d2c25a6ef61e9e52556bc14aaa1408a1"
+content-hash = "93772b206512176fd22c55a6f9038da85d1c334f2a07dfd19df311a1189809c6"
