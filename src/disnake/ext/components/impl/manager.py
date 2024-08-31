@@ -181,9 +181,10 @@ class ComponentManager(component_api.ComponentManager):
     The topmost manager will always be the root manager, which can be acquired
     through calling :func:`get_manager` without passing a name.
 
-    When a component is invoked on, for example, a manager "foo.bar", it will
-    wrap the callback in the :attr:`wrap_callback` wrappers starting from the
-    root manager, then "foo", then "foo.bar", and finally invoke the callback.
+    When a component is invoked on - for example - a manager "foo.bar", it will
+    wrap the callback in the :meth:`as_callback_wrapper` wrappers bubbling up.
+    That is, the callback is wrapped by the root manager, then "foo",
+    then "foo.bar", and finally invoke the callback.
 
     If any exceptions occur during the wrapping or invocation of the callback,
     the managers' exception handlers will be invoked starting from "foo.bar",
@@ -193,10 +194,10 @@ class ComponentManager(component_api.ComponentManager):
 
     Parameters
     ----------
-    name: :class:`str`
+    name:
         The name of the component manager. This should be unique for all live
         component managers.
-    count: Optional[:class:`bool`]
+    count:
         Whether the component manager should insert *one* count character to
         resolve duplicates. Normally, sending two components with the same
         custom id would error. Enabling this ensures custom ids are unique
@@ -205,12 +206,12 @@ class ComponentManager(component_api.ComponentManager):
 
         If not set, the manager will use its parents' settings. The default
         set on the root manager is ``True``.
-    sep: Optional[:class:`str`]
+    sep:
         The character(s) to use as separator between custom id parts.
 
         If not set, the manager will use its parents' settings. The default
         set on the root manager is ``"|"``.
-    bot: Optional[:class:`commands.Bot`]
+    bot:
         The bot to which to register this manager. This can be specified at any
         point through :meth:`.add_to_bot`.
 
@@ -267,7 +268,19 @@ class ComponentManager(component_api.ComponentManager):
 
     @property
     def bot(self) -> AnyBot:
-        """The bot to which this manager is registered."""
+        """The bot to which this manager is registered.
+
+        If the manager has not yet been registered, this raises an exception.
+
+        .. note::
+            This is recursively accessed for all the parents of this manager.
+            For example, if ``get_manager().bot`` is set, then any of its
+            children ``get_manager("foo.bar").bot`` will also return that same
+            bot instance.
+
+            It is therefore generally recommended to set the bot on the root
+            manager so that all other managers automatically have access to it.
+        """
         bot = _recurse_parents_getattr(self, "_bot", None)
         if bot:
             return bot
@@ -294,9 +307,25 @@ class ComponentManager(component_api.ComponentManager):
         return self._components
 
     @property
-    def count(self) -> bool:  # noqa: D102
-        # <<docstring inherited from api.components.ComponentManager>>
+    def count(self) -> bool:
+        """Whether or not this manager should add a count character to custom ids.
 
+        This prevents an error when two components with otherwise equal custom
+        ids are sent.
+
+        By default, this is set to :obj:`True`. This can be changed using
+        :meth:`config`.
+
+        .. note::
+            This is recursively checked for all the parents of this manager.
+            For example, if ``get_manager("foo").count == True``, then its
+            child ``get_manager("foo.bar").count`` will also return ``True``
+            unless explicitly set to ``False``.
+
+        .. warning::
+            As this takes 1 character, the effective maximum custom id length
+            is reduced to 99 characters.
+        """
         return _recurse_parents_getattr(self, "_count", _DEFAULT_COUNT)
 
     @property
@@ -307,7 +336,17 @@ class ComponentManager(component_api.ComponentManager):
 
     @property
     def sep(self) -> str:
-        """The separator used to delimit parts of the custom ids of this manager."""
+        """The separator used to delimit parts of the custom ids of this manager.
+
+        By default, this is set to "|". This can be changed using
+        :meth:`config`.
+
+        .. note::
+            This is recursively accessed for all the parents of this manager.
+            For example, if ``get_manager("foo").sep == "|"``, then its
+            child ``get_manager("foo.bar").sep`` will also return ``"|"``
+            unless explicitly set to some other value.
+        """
         return _recurse_parents_getattr(self, "_sep", _DEFAULT_SEP)
 
     @property
@@ -713,7 +752,7 @@ class ComponentManager(component_api.ComponentManager):
 
         Parameters
         ----------
-        func: Callable[[:class:`ComponentManager`, :class:`RichComponent`, :class:`disnake.Interaction`], AsyncGenerator[None, None]]
+        func:
             The callback to register. This must be an async function that takes
             the component manager as the first argument, the component as the
             second argument, and the interaction as the last. The function must
@@ -767,7 +806,7 @@ class ComponentManager(component_api.ComponentManager):
 
         Parameters
         ----------
-        func: Callable[[:class:`ComponentManager`, :class:`RichComponent`, :class:`disnake.Interaction`, :class:`Exception`], None]
+        func:
             The callback to register. This must be an async function that takes
             the component manager as the first argument, the component as the
             second, the interaction as the third, and the exception as the last.
@@ -848,21 +887,21 @@ class ComponentManager(component_api.ComponentManager):
 
         Parameters
         ----------
-        as_root: :class:`bool`
+        as_root:
             Whether to use the root manager to get the component. This defaults
             to ``True`` so that any externally registered button can be built.
-        identifier: :class:`str`
+        identifier:
             The identifier of the button that is to be instantiated.
-        label: Optional[:class:`str`]
+        label:
             The label to use. If not provided, uses the button class' default.
         style: disnake.ButtonStyle
             The style to use. If not provided, uses the button class' default.
-        emoji: Optional[Union[:class:`str`, :class:`disnake.PartialEmoji`, :class:`disnake.Emoji`]]
+        emoji:
             The emoji to use. If not provided, uses the button class' default.
-        disabled: Optional[:class:`str`]
+        disabled:
             Whether or not to disable the button. If not provided, uses the
             button class' default.
-        **kwargs: :class:`object`
+        **kwargs:
             Any remaining keyword arguments are passed to the button's ``__init__``.
 
         Returns
@@ -879,7 +918,7 @@ class ComponentManager(component_api.ComponentManager):
         :class:`Exception`
             Any exception raised during button instantiation is propagated as-is.
 
-        """  # noqa: E501
+        """
         if label is not omit.Omitted:
             kwargs["label"] = label
         if style is not omit.Omitted:
@@ -921,25 +960,25 @@ class ComponentManager(component_api.ComponentManager):
 
         Parameters
         ----------
-        as_root: :class:`bool`
+        as_root:
             Whether to use the root manager to get the component. This defaults
             to ``True`` so that any externally registered select can be built.
-        identifier: :class:`str`
+        identifier:
             The identifier of the button that is to be instantiated.
-        placeholder: Optional[:class:`str`]
+        placeholder:
             The placeholder to use. If not provided, uses the select class' default.
-        min_values: :class:`int`
+        min_values:
             The minimum number of values a user is allowed to select. If not
             provided, uses the select class' default.
-        max_values: :class:`int`
+        max_values:
             The maximum number of values a user is allowed to select. If not
             provided, uses the select class' default.
-        disabled: Optional[:class:`str`]
+        disabled:
             Whether or not to disable the button. If not provided, uses the
             select class' default.
-        options: List[:class:`disnake.SelectOption`]
+        options:
             The options to use. If not provided, uses the select class' default.
-        **kwargs: :class:`object`
+        **kwargs:
             Any remaining keyword arguments are passed to the select's ``__init__``.
 
         Returns
@@ -1069,8 +1108,8 @@ def check_manager(name: str) -> bool:
     """Check if a manager with the provided name exists.
 
     .. note::
-        Unlike :func:`get_manager`, this function will not create missing
-        managers.
+        Unlike :func:`get_manager`, this function will not create a manager
+        if the provided name does not exist.
 
     Parameters
     ----------

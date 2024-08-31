@@ -11,3 +11,11 @@ Subpackages
 
    component </api_ref/impl/component/index>
    parser </api_ref/impl/parser/index>
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   manager </api_ref/impl/manager>
