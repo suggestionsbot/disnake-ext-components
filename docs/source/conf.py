@@ -38,6 +38,8 @@ copyright = "2023, Sharp-Eyes"
 author = "Sharp-Eyes"
 release = "0.5.0a1"
 
+# nitpicky = True
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
@@ -102,6 +104,7 @@ intersphinx_mapping = {
 
 autodoc_member_order = "groupwise"
 autodoc_typehints = "signature"
+autodoc_typehints_format = "short"
 autodoc_default_options = {"show-inheritance": True, "inherited-members": False}
 
 # -- Hoverxref config ---------------------------------------------------------
@@ -146,12 +149,15 @@ typehints_document_rtype = False
 typehints_use_rtype = False
 simplify_optional_unions = True
 always_use_bars_union = True
+typehints_fully_qualified = False
 
+import disnake.ext.components.fields
 
-# # Customise display for specific types.
+# Customise display for specific types.
 aliases: typing.Dict[object, str] = {
     # Idk why this is needed, but it is...
     disnake.ButtonStyle: ":class:`~disnake.ButtonStyle`",
+    disnake.ext.components.fields.NOTHING: ":obj:`~attrs.NOTHING`",
 }
 
 

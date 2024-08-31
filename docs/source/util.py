@@ -112,8 +112,11 @@ def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
     if module == "typing_extensions":
         module = "typing"
 
-    if module == "_io":
+    elif module == "_io":
         module = "io"
+
+    elif module.startswith("disnake.ext.components"):
+        module = module.removeprefix("disnake.ext.")
 
     full_name = f"{module}.{class_name}" if module != "builtins" else class_name
     fully_qualified: bool = getattr(config, "typehints_fully_qualified", False)
