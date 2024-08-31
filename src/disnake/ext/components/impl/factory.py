@@ -200,3 +200,6 @@ class NoopFactory(component_api.ComponentFactory[typing.Any]):
         # <<docstring inherited from api.components.ComponentFactory>>
 
         raise NotImplementedError
+
+    def __repr__(self) -> str:
+        return "<NoopFactory>"

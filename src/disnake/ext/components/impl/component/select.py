@@ -21,20 +21,20 @@ __all__: typing.Sequence[str] = (
 # God knows why this is needed, but if I don't do this, classes inheriting from
 # RichSelect see e.g. `placeholder: str = fields.internal(default=None)` in the
 # init signature.
-internal = fields.internal
+# internal = fields.internal
 
 
 class BaseSelect(
     component_api.RichSelect, component_base.ComponentBase, typing.Protocol
 ):
-    """The base class of a disnake-ext-components selects.
+    """The base class of a disnake-ext-components select menu.
 
     For implementations, see :class:`RichStringSelect`, :class:`RichUserSelect`,
     :class:`RichRoleSelect`, :class:`RichMentionableSelect`,
     :class:`RichChannelSelect`.
     """
 
-    event = "on_dropdown"
+    event: typing.ClassVar[str] = "on_dropdown"
 
     placeholder: typing.Optional[str] = fields.internal(default=None)
     min_values: int = fields.internal(default=1)
@@ -42,7 +42,7 @@ class BaseSelect(
     disabled: bool = fields.internal(default=False)
 
     async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, __inter: interaction.MessageInteraction
+        self, inter: interaction.MessageInteraction, /
     ) -> None:
         # <<docstring inherited from component_api.RichButton>>
 
@@ -75,6 +75,10 @@ class RichStringSelect(BaseSelect, typing.Protocol):
     options: typing.List[disnake.SelectOption] = fields.internal(
         default=attr.Factory(list)  # pyright: ignore
     )
+    """The options for this select menu.
+
+    Must be a list of between 1 and 25 strings.
+    """
 
     async def as_ui_component(self) -> disnake.ui.StringSelect[None]:  # noqa: D102
         # <<docstring inherited from component_api.RichButton>>
@@ -228,6 +232,10 @@ class RichChannelSelect(BaseSelect, typing.Protocol):
     channel_types: typing.Optional[typing.List[disnake.ChannelType]] = fields.internal(
         default=None
     )
+    """The channel types to allow for this select menu.
+
+    Defaults to :obj:`None`, implying all channel types are allowed.
+    """
 
     async def as_ui_component(self) -> disnake.ui.ChannelSelect[None]:  # noqa: D102
         # <<docstring inherited from component_api.RichButton>>

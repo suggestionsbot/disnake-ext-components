@@ -115,7 +115,7 @@ class RichSelect(RichComponent, typing.Protocol):
     """The placeholder of the component.
 
     This shows when nothing is selected, or shows nothing if set to
-    :data:``None``.
+    :data:`None`.
     """
     min_values: int
     """The minimum number of values the user must select.

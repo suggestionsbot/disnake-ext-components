@@ -105,7 +105,7 @@ def get_parser(type_: typing.Type[_T]) -> Parser[_T]:  # noqa: D417
 
     Returns
     -------
-    :class:`Parser`\[``T``]:
+    :class:`Parser`\[``_T``]:
         The default parser for the provided type.
 
     Raises

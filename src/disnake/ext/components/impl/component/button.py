@@ -43,7 +43,7 @@ class RichButton(
     keyword-only arguments.
     """
 
-    event = "on_button_click"
+    event: typing.ClassVar[str] = "on_button_click"
 
     label: typing.Optional[str] = fields.internal(default=None)
     style: disnake.ButtonStyle = fields.internal(default=disnake.ButtonStyle.secondary)
@@ -66,8 +66,7 @@ class RichButton(
         )
 
     async def callback(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: D102
-        self,
-        __inter: interaction.MessageInteraction,
+        self, inter: interaction.MessageInteraction, /
     ) -> None:
         # <<docstring inherited from component_api.RichButton>>
 

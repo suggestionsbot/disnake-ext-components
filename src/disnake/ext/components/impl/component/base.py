@@ -162,10 +162,10 @@ class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore[reportPrivateUsage
     """Metaclass for all disnake-ext-components component types.
 
     It is **highly** recommended to use this metaclass for any class that
-    should interface with the componenents api exposed by
-    disnake-ext-components.
+    should interface with the components api exposed by
+    `disnake-ext-components`.
 
-    This metaclass handles :mod:`attr` class generation, custom id completion,
+    This metaclass handles :mod:`attrs` class generation, custom id completion,
     interfacing with component managers, parser and factory generation, and
     automatic slotting.
     """
@@ -220,7 +220,19 @@ class ComponentBase(
 
     _parent: typing.ClassVar[typing.Optional[typing.Type[typing.Any]]] = None
     manager: typing.ClassVar[typing.Optional[component_api.ComponentManager]] = None
+    """The manager to which this component is registered.
+
+    Defaults to :obj:`None` if this component is not registered to any manager.
+    """
+
     factory = factory_impl.NoopFactory()
+    r"""Factory type that builds instances of this class.
+
+    Since component base classes can be declared as :class:`~typing.Protocol`\s
+    and protocols cannot be instantiated, this attribute defaults to a
+    :class:`~NoopFactory`. In case a concrete component subclass is created, a matching
+    :class:`~ComponentFactory` is automatically generated instead.
+    """
 
     async def as_ui_component(self) -> disnake.ui.WrappedComponent:  # noqa: D102
         # <<Docstring inherited from component_api.RichComponent>>
