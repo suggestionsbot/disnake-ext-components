@@ -12,6 +12,7 @@ import inspect
 import re
 import typing
 
+import typing_extensions
 from docutils import nodes
 from sphinx import addnodes
 from sphinx.locale import _
@@ -55,7 +56,7 @@ class attributetable_item(nodes.Part, nodes.Element):
 
 
 def visit_attributetable_node(self: HTMLTranslator, node: nodes.Element) -> None:
-    class_ = node["python-class"]
+    class_ = typing.cast(str, node["python-class"])
     self.body.append(f'<div class="py-attribute-table" data-move-to-id="{class_}">')
 
 
@@ -69,11 +70,17 @@ def visit_attributetabletitle_node(self: HTMLTranslator, node: nodes.Element) ->
 
 def visit_attributetablebadge_node(self: HTMLTranslator, node: nodes.Element) -> None:
     """Add a class to each badge of the type that it is."""
-    badge_type: str = node["badge-type"]
-    if badge_type not in ("coroutine", "decorator", "method", "classmethod"):
+    badge_type = typing.cast(str, node["badge-type"])
+    if badge_type not in (
+        "coroutine",
+        "decorator",
+        "method",
+        "classmethod",
+        "attribute",
+    ):
         msg = f"badge_type {badge_type} is currently unsupported"
         raise RuntimeError(msg)
-    attributes = {
+    attributes: typing.Dict[typing.Literal["class"], str] = {
         "class": f"badge-{badge_type}",
     }
     self.body.append(self.starttag(node, "span", **attributes))
@@ -131,7 +138,7 @@ class PyAttributeTable(SphinxDirective):
         return modulename, name
 
     def run(self) -> typing.List[nodes.Node]:
-        content = self.arguments[0].strip()
+        content = typing.cast(str, self.arguments[0]).strip()
         node = attributetableplaceholder("")
         modulename, name = self.parse_name(content)
         node["python-doc"] = self.env.docname
@@ -174,12 +181,13 @@ def process_attributetable(app: Sphinx, doctree: nodes.document, _docname: str) 
     env = app.builder.env
 
     lookup = build_lookup_table(env)
-    for node in doctree.traverse(attributetableplaceholder):
-        modulename, classname, fullname = (
-            node["python-module"],
-            node["python-class"],
-            node["python-full-name"],
-        )
+    doc_iter = typing.cast(
+        typing.Iterator[nodes.document], doctree.findall(attributetableplaceholder)
+    )
+    for node in doc_iter:
+        modulename = typing.cast(str, node["python-module"])
+        classname = typing.cast(str, node["python-class"])
+        fullname = typing.cast(str, node["python-full-name"])
         groups = get_class_results(lookup, modulename, classname, fullname)
         table = attributetable("")
         for label, subitems in groups.items():
@@ -197,6 +205,13 @@ def process_attributetable(app: Sphinx, doctree: nodes.document, _docname: str) 
             node.replace_self([table])
 
 
+def _is_classvar(ann: typing.Union[str, type]) -> bool:
+    if isinstance(ann, str):
+        return ann.startswith(("typing.ClassVar", "typing_extensions.ClassVar"))
+
+    return typing.get_origin(ann) in (typing.ClassVar, typing_extensions.ClassVar)
+
+
 def get_class_results(
     lookup: typing.Dict[str, typing.List[str]],
     modulename: str,
@@ -204,7 +219,7 @@ def get_class_results(
     fullname: str,
 ) -> typing.Dict[str, typing.List[TableElement]]:
     module = importlib.import_module(modulename)
-    cls = getattr(module, name)
+    cls: type = getattr(module, name)
 
     groups: typing.Dict[str, typing.List[TableElement]] = {
         _("Attributes"): [],
@@ -216,6 +231,8 @@ def get_class_results(
     except KeyError:
         return groups
 
+    anns: typing.Dict[str, typing.Any] = {}
+
     for attr in members:
         attrlookup = f"{fullname}.{attr}"
         key = _("Attributes")
@@ -223,8 +240,9 @@ def get_class_results(
         label = attr
         value = None
 
-        for base in cls.__mro__:
+        for base in cls.__mro__[:-1]:
             value = base.__dict__.get(attr)
+            anns.update(base.__annotations__)
             if value is not None:
                 break
 
@@ -249,6 +267,14 @@ def get_class_results(
                     key = _("Methods")
                     badge = attributetablebadge("def", "def")
                     badge["badge-type"] = _("method")
+            elif attr in anns and _is_classvar(anns[attr]):
+                key = _("Attributes")
+                badge = attributetablebadge("classvar", "classvar")
+                badge["badge-type"] = _("attribute")
+        elif attr in anns and _is_classvar(anns[attr]):
+            key = _("Attributes")
+            badge = attributetablebadge("classvar", "classvar")
+            badge["badge-type"] = _("attribute")
 
         groups[key].append(TableElement(fullname=attrlookup, label=label, badge=badge))
 

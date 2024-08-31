@@ -71,7 +71,9 @@ ul.py-attribute-table-list {
   text-decoration: none;
 }
 
-.py-attribute-table-list :where(.badge-coroutine, .badge-method, .badge-decorator, .badge-classmethod) {
+.py-attribute-table-list :where(.badge-coroutine, .badge-method, .badge-decorator, .badge-classmethod, .badge-attribute) {
+  padding-left: 0.2em;
+  padding-right: 10px;
   flex-basis: 3em;
   text-align: right;
   font-size: 0.9em;
