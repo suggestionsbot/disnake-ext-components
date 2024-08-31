@@ -54,7 +54,14 @@ build-backend = "poetry.core.masonry.api"
 typeCheckingMode = "strict"
 python-version = 3.8
 reportMissingTypeStubs = false
-
+exclude = [
+    # Default options
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*",
+    # No typechecking in docs anymore :(
+    "docs",
+]
 
 [tool.ruff.lint]
 # Taken from https://github.com/ooliver1/mafic/blob/master/pyproject.toml
