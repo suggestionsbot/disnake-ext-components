@@ -109,3 +109,21 @@ body[data-theme="dark"] .highlight .nn {
 .toc-scroll {
     flex-grow: 1
 }
+
+/* ReadTheDocs-specific colours */
+.rst-current-version {
+    color: var(--color-api-keyword) !important;
+    font-weight: bold;
+}
+
+.rst-other-versions a {
+    color: var(--color-link) !important;
+}
+
+.rst-other-versions a:hover {
+    text-decoration: underline;
+}
+
+.rst-other-versions a:visited {
+    color: var(--color-link--visited) !important;
+}
