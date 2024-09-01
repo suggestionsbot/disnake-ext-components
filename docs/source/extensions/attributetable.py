@@ -242,7 +242,7 @@ def get_class_results(
 
         for base in cls.__mro__[:-1]:
             value = base.__dict__.get(attr)
-            anns.update(base.__annotations__)
+            anns.update(getattr(base, "__annotations__", {}))
             if value is not None:
                 break
 
