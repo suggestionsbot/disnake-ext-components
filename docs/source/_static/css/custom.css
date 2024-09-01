@@ -54,6 +54,7 @@ body:not([data-theme="dark"]) {
 body {
     --monospace-font-family: monospace;
     --color-api-pre-name: var(--color-api-name);
+    --toc-font-size: var(--font-size--small--2);
 }
 
 /* Colours in codeblocks */
@@ -90,4 +91,21 @@ body[data-theme="dark"] .highlight .nn {
     color: #00AEFF;
     text-decoration: none;
     font-weight: normal;
+}
+
+/* Sidebar changes */
+.toc-drawer {
+    display: flex;
+    width: 20em;
+    flex-grow: 1;
+}
+
+@media (max-width: 82em) {
+    .toc-drawer {
+        right: -20em;
+    }
+}
+
+.toc-scroll {
+    flex-grow: 1
 }
