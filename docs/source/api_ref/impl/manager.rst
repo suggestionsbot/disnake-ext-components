@@ -5,6 +5,13 @@ Component Manager Implementation
 
 .. automodule:: components.impl.manager
 
+Functions
+---------
+
+.. autofunction:: components.impl.manager.get_manager
+
+.. autofunction:: components.impl.manager.check_manager
+
 Classes
 -------
 
@@ -12,10 +19,3 @@ Classes
 
 .. autoclass:: components.impl.manager.ComponentManager
     :members:
-
-Functions
----------
-
-.. autofunction:: components.impl.manager.get_manager
-
-.. autofunction:: components.impl.manager.check_manager
