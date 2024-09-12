@@ -152,9 +152,6 @@ class Parser(parser_api.Parser[_T], typing.Protocol[_T]):
     ``loads``, like :func:`json.loads` serves to turn a string value into
     a different type. Similarly, ``dumps`` serves to convert that type
     back into a string.
-
-    Simpler parsers can also be generated from ``loads`` and ``dumps`` functions
-    using :meth:`from_funcs`, so as to not have to define an entire class.
     """
 
     def __init__(self, *args: object, **kwargs: object) -> None:
