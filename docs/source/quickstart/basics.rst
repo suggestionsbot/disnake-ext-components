@@ -6,12 +6,12 @@ This section explains how to use `disnake-ext-components` to create and manage y
 Components
 ----------
 
-Component classes are all :obj:`attrs` classes. If you're unfamiliar with attrs, know that they work very similarly to dataclasses.
+Component classes are all :attrs:`attrs <>` classes. If you're unfamiliar with attrs, know that they work very similarly to dataclasses, or take a look at their :attrs:`examples <examples.html>`.
 A component class has two types of fields:
 
 - **Internal fields**
 
-  These are reserved for parameters that directly influence the component, such as the :obj:`~disnake.ui.Button.label` field for a button.
+  These are reserved for parameters that directly influence the component, such as the :obj:`~disnake.ui.Button.label` field for a :class:`~disnake.ui.Button`.
   For the most part, these match the attributes on the standard :ref:`disnake.ui <disnake_api_ui>` component classes.
 
 - **Custom id fields**
@@ -163,15 +163,18 @@ The examples in the tabs below show all available custom id parameters for each 
             async def callback(self, inter: disnake.MessageInteraction):
                 await inter.response.send_message("Click!")
 
-Since these classes are created using attrs, the ``__init__`` methods for your component classes are automatically generated. If you need further control, you can use attrs features like ``__attrs_post_init__`` to process each instance before they are handled by `disnake-ext-components`.
+Since these classes are created using attrs, the ``__init__`` methods for your component classes are automatically generated. If you need further control, you can use attrs features like ``__attrs_post_init__`` to process each instance before they are handled by `disnake-ext-components`. See our :doc:`attrs utilities example </examples/attrs>` for more information.
 
 
 Component Managers
 ------------------
 
 Now that we know how to create components, we need to learn how to hook these components into your bot. Luckily, this is pretty simple.
-All we need is a :class:`~ComponentManager`, which we get using :func:`~get_manager`. For basic usage, we just call ``get_manager()`` without arguments and assign it to a variable. We then use :meth:`~ComponentManager.add_to_bot` and pass the bot to it to allow the manager to communicate with the bot.
-Finally, we register components to the bot using :meth:`~ComponentManager.register`. This can be done in a few different ways, but for now the easiest way is to just use it as a basic decorator.
+All we need is a :class:`~components.impl.manager.ComponentManager`, which we get using :func:`~components.impl.manager.get_manager`.
+For basic usage, we simply call it without arguments and assign it to a variable.
+We then use :func:`ComponentManager.add_to_bot() <components.impl.manager.ComponentManager.add_to_bot>` to allow the manager to communicate with the bot.
+Finally, we register components to the manager using :meth:`ComponentManager.register() <components.impl.manager.ComponentManager.register>`.
+This can be done in a few different ways, but for now the easiest way is to just use it as a basic decorator.
 
 .. code-block:: py
     :linenos:
