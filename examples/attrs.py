@@ -30,14 +30,6 @@ class CustomisableSelect(components.RichStringSelect):
 
 @bot.slash_command()  # pyright: ignore
 async def make_select(interaction: disnake.CommandInteraction, options: str) -> None:
-    """Make your own select menu.
-
-    Parameters
-    ----------
-    options:
-        A comma-separated string with all options. Max 25.
-
-    """
     if not options.strip():
         await interaction.response.send_message("You must specify at least one option!")
         return

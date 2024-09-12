@@ -1,10 +1,4 @@
-"""A simple example on the use of selects with disnake-ext-components.
-
-For this example, we implement a select menu with double functionality.
-Firstly, the select allows you to select one of three slots. After selecting a
-slot, the select is modified to instead allow you to select a colour. The
-selected slot and colour are then combined to colour the corresponding square.
-"""
+"""A simple example on the use of selects with disnake-ext-components."""
 
 from __future__ import annotations
 

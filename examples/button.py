@@ -16,7 +16,7 @@ manager.add_to_bot(bot)
 class MyButton(components.RichButton):
     label: typing.Optional[str] = "0"
 
-    count: int
+    count: int = 0
 
     async def callback(self, interaction: components.MessageInteraction) -> None:
         self.count += 1
@@ -28,7 +28,7 @@ class MyButton(components.RichButton):
 @bot.slash_command()  # pyright: ignore  # still some unknowns in disnake
 async def test_button(inter: disnake.CommandInteraction) -> None:
     wrapped = components.wrap_interaction(inter)
-    component = MyButton(count=0)
+    component = MyButton()
 
     await wrapped.response.send_message(components=component)
 

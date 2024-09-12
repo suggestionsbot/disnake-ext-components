@@ -1,65 +1,57 @@
 Attrs
 =====
 
-An example showcasing how attrs utilities can be used with ext-components.
+Step-by-Step
+------------
+
+An example showcasing how :attrs:`attrs <>` utilities can be used with ext-components.
 
 Say we wish to create a component, but we do not know the number of options beforehand, and we would like the user to be able to select all of them. It can be cumbersome to manually keep updating the ``max_values`` parameter of the select.
 
-Luckily, with the knowledge that ext-components is built upon the ``attrs`` lib, a few options become available to us.
-
-
-For this example, we will be making use of attrs classes' `__attrs_post_init__ <https://www.attrs.org/en/stable/init.html#post-init/>`_ method, which is called immediately after attrs finishes its normal initialisation logic. If you're familiar with dataclasses, this is essentially the same as a dataclass' ``__post_init__`` method.
-
-First and foremost, we create a bot as per usual. Since we don't need any prefix command capabilities, we opt for an :class:`~disnake.ext.commands.InteractionBot`.
-
 .. literalinclude:: ../../../examples/attrs.py
-    :caption: examples/attrs.py - create a Bot object
-    :lines: 3-8
+    :caption: examples/attrs.py - create a select
+    :lines: 15, 19-28
 
-Next, we make a component manager and register it to the bot.
+To create an instance of this select where all options are selectable, we would need to do the following:
 
-.. literalinclude:: ../../../examples/attrs.py
-    :caption: examples/attrs.py - create a manager and registering it
-    :lines: 10-11
+.. code-block:: python
 
-Now we create our customizable select.
+    options = [...]
+    select = CustomisableSelect(options=options, max_values=len(options))
+
+Luckily, with the knowledge that *ext-components* is built upon :attrs:`attrs <>`, a few options become available to us.
+
+For this example, we will be making use of attrs classes' :attrs:`__attrs_post_init__ <init.html#post-init/>` method, which is called immediately after attrs finishes its normal initialisation logic. If you're more familiar with dataclasses, this is essentially the same as dataclasses' similarly named ``__post_init__`` method.
 
 .. literalinclude:: ../../../examples/attrs.py
     :caption: examples/attrs.py - create a select
-    :lines: 14-28
-    :emphasize-lines: 1, 3-4
+    :lines: 15-28
+    :emphasize-lines: 2-3
 
-Now, we ensure that max_values adapts to the passed number of options.
-Since rich components use attrs under the hood, this can easily be
-achieved through the ``__attrs_post_init__`` method.
+This allows the select to be created as follows:
 
-.. literalinclude:: ../../../examples/attrs.py
-    :caption: examples/attrs.py - customisation logic
-    :lines: 16-17
+.. code-block:: python
+
+    options = [...]
+    select = CustomisableSelect(options=options)
 
 Then we create our test command and send the previously created customisable select.
 
 .. literalinclude:: ../../../examples/attrs.py
     :caption: examples/attrs.py - create a command
-    :lines: 31-56
+    :lines: 31-49
     :linenos:
 
-If the string is empty or whitespace, the user did not provide options (*lines 10-12*).
-Next, we make the options by splitting over commas (*lines 14-17*).
-Before creating the component, validate that there's max 25 options (*lines 19-21*).
-Finally if everything went correctly, we send the component.
+If the string is empty or whitespace, the user did not provide options (*lines 3-5*).
+Next, we make the options by splitting over commas (*lines 7-10*).
+Before creating the component, validate that there's max 25 options (*lines 12-14*).
+Finally, if everything went correctly, we send the component (*lines 16-19*).
 
-Lastly, we run the bot.
-
-.. literalinclude:: ../../../examples/attrs.py
-    :caption: examples/attrs.py - run the bot
-    :lines: 59
 
 Source Code
 -----------
+:example:`attrs`
 
 .. literalinclude:: ../../../examples/attrs.py
     :caption: examples/attrs.py
-    :lines: 3-59
-    :emphasize-lines: 8-9, 12, 14-15, 57
     :linenos:

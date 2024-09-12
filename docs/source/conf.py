@@ -140,6 +140,15 @@ module_path = util.get_module_path()
 linkcode_resolve = util.make_linkcode_resolver(module_path, repo_url, git_ref)
 
 
+# -- Extlinks config ----------------------------------------------------------
+
+extlinks = {
+    "github": (f"{repo_url}/%s", "%s"),
+    "github-blob": (f"{repo_url}/blob/{git_ref}/%s", "%s"),
+    "example": (f"{repo_url}/blob/{git_ref}/examples/%s.py", "View on GitHub: %s.py"),
+    "attrs": ("https://www.attrs.org/en/stable/%s", "%s"),
+}
+
 # -- sphinx-autodoc-typehints config ------------------------------------------
 
 # Apply monkeypatch.
