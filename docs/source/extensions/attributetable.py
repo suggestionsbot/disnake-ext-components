@@ -254,7 +254,6 @@ def get_class_results(
                 badge["badge-type"] = _("coroutine")
             elif isinstance(value, classmethod):
                 key = _("Methods")
-                label = f"{name}.{attr}"
                 badge = attributetablebadge("cls", "cls")
                 badge["badge-type"] = _("classmethod")
             elif inspect.isfunction(value):
