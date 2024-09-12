@@ -19,3 +19,4 @@ Submodules
    :maxdepth: 1
 
    manager </api_ref/impl/manager>
+   factory </api_ref/impl/factory>

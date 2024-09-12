@@ -33,3 +33,8 @@ Classes
 
 .. autoclass:: components.api.component.ComponentManager
     :members:
+
+.. attributetable:: components.api.component.ComponentFactory
+
+.. autoclass:: components.api.component.ComponentFactory
+    :members:

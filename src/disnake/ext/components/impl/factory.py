@@ -34,7 +34,9 @@ class ComponentFactory(
     """
 
     parsers: ParserMapping = attr.field(converter=types.MappingProxyType)  # type: ignore
+    """A mapping of custom id field name to that field's parser."""
     component: typing.Type[component_api.ComponentT]
+    """The component type that this factory builds."""
 
     @classmethod
     def from_component(  # noqa: D102
