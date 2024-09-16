@@ -4,8 +4,8 @@ Examples
 .. _disnake-ext-components: https://github.com/DisnakeCommunity/disnake-ext-components
 
 Welcome to the examples section of our docs.
-Basic understanding of python and the usage of disnake's components is considered pre-knowledge for these examples, along with some familiarity with |attrs|_ classes or dataclasses.
-If this is your first time using *ext-components*, we recommend looking at the :ref:`Quickstart Guide <quickstart>`.
+Basic understanding of python and the usage of disnake's components is considered pre-knowledge for these examples, along with some familiarity with :attrs:`attrs < >` classes or dataclasses.
+If this is your first time using *disnake-ext-components*, we recommend looking at the :ref:`Quickstart Guide <quickstart>`.
 The examples aim to show you how some of the features of this extension can be used and implemented.
 
 These examples are also available on our :github-blob:`GitHub repository <>` without documentation, and are perfectly runnable as-is.

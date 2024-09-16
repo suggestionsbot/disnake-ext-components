@@ -1,4 +1,4 @@
-"""An example showcasing how attrs utilities can be used with ext-components."""
+"""An example showcasing how attrs utilities can be used with disnake-ext-components."""
 
 import os
 

@@ -436,7 +436,7 @@ class ComponentManager(component_api.ComponentManager):
         The required reference objects depend on the parsers of the component
         you are trying to create. If available, a
         :class:`disnake.MessageInteraction` should always suffice for the
-        parsers provided by ext-components.
+        parsers provided by disnake-ext-components.
 
         Note that this only works for components registered to this manager.
 
@@ -514,7 +514,7 @@ class ComponentManager(component_api.ComponentManager):
         The required reference objects depend on the parsers of the component
         you are trying to create. If available, a
         :class:`disnake.MessageInteraction` should always suffice for the
-        parsers provided by ext-components.
+        parsers provided by disnake-ext-components.
 
         This returns a structure of components that can be directly passed into
         any send method's component parameters, and a separate sequence
