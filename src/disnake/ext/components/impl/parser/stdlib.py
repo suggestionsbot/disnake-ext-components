@@ -52,11 +52,10 @@ class NoneParser(parser_base.Parser[None], is_default_for=(_NoneType,)):
     Parameters
     ----------
     strict: bool
-        If the NoneParser is set to strict mode, it will only return ``None``
-        if the provided argument was empty. If not, it will raise an exception.
-        If strict is set to ``False``, the parser will always return None,
-        regardless of input.
-        To prevent unforeseen bugs, this defaults to True.
+        Whether this NoneParses is set to strict mode.
+
+        To prevent unforeseen bugs, this defaults to ``True``.
+        See :meth:`loads` and :meth:`dumps` for the implications of strict-mode.
 
     """
 
@@ -66,7 +65,26 @@ class NoneParser(parser_base.Parser[None], is_default_for=(_NoneType,)):
         self.strict = strict
 
     def loads(self, _source: object, argument: str) -> None:
-        # <<docstring inherited from parser_api.Parser>>
+        """Load ``None`` from a string.
+
+        If :attr:``self.strict`` is set to ``True``, this will fail if the
+        provided ``argument`` isn't the empty string (``""``). Otherwise,
+        this parser will *always* return ``None``.
+
+        Parameters
+        ----------
+        _source:
+            Unused.
+        argument:
+            The string that is to be converted to ``None``.
+
+        Raises
+        ------
+        ValueError:
+            The parser is in strict mode, and the provided ``argument`` was not
+            the empty string.
+
+        """
         if not argument or not self.strict:
             return None  # noqa: RET501
 
@@ -74,7 +92,26 @@ class NoneParser(parser_base.Parser[None], is_default_for=(_NoneType,)):
         raise ValueError(msg)
 
     def dumps(self, argument: None) -> str:
-        # <<docstring inherited from parser_api.Parser>>
+        """Dump ``None`` into a string.
+
+        If :attr:``self.strict`` is set to ``True``, this will fail if the
+        provided ``argument`` isn't exactly ``None``. Otherwise,
+        this parser will *always* return ``None``.
+
+        Parameters
+        ----------
+        _source:
+            Unused.
+        argument:
+            The value that is to be dumped.
+
+        Raises
+        ------
+        ValueError:
+            The parser is in strict mode, and the provided ``argument`` was not
+            ``None``.
+
+        """
         if argument is None or not self.strict:
             return ""
 
