@@ -44,7 +44,8 @@ _T = typing_extensions.TypeVar("_T")
 # NONE
 
 
-class NoneParser(parser_base.Parser[None], is_default_for=(_NoneType,)):
+@parser_base.register_parser_for(_NoneType)
+class NoneParser(parser_base.Parser[None]):
     """parser_base parser for None.
 
     Mainly relevant Optional[...] parsers.
@@ -64,7 +65,7 @@ class NoneParser(parser_base.Parser[None], is_default_for=(_NoneType,)):
     def __init__(self, *, strict: bool = True) -> None:
         self.strict = strict
 
-    def loads(self, _source: object, argument: str) -> None:
+    def loads(self, argument: str, /) -> None:
         """Load ``None`` from a string.
 
         If :attr:``self.strict`` is set to ``True``, this will fail if the
@@ -73,8 +74,6 @@ class NoneParser(parser_base.Parser[None], is_default_for=(_NoneType,)):
 
         Parameters
         ----------
-        _source:
-            Unused.
         argument:
             The string that is to be converted to ``None``.
 
@@ -134,7 +133,8 @@ def dumps_float(number: float) -> str:
     return _removesuffix(str(number), ".0")
 
 
-class FloatParser(parser_base.Parser[float], is_default_for=(float,)):
+@parser_base.register_parser_for(float)
+class FloatParser(parser_base.Parser[float]):
     """Specialised number parser for floats.
 
     Strips any trailing zeroes and can be provided with a maximum number of
@@ -146,7 +146,7 @@ class FloatParser(parser_base.Parser[float], is_default_for=(float,)):
     def __init__(self, digits: typing.Optional[int] = None):
         self.digits = digits  # TODO: implement
 
-    def loads(self, _source: object, argument: str) -> float:  # noqa: D102
+    def loads(self, argument: str) -> float:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
 
         return float(argument)
@@ -157,7 +157,8 @@ class FloatParser(parser_base.Parser[float], is_default_for=(float,)):
         return dumps_float(argument)
 
 
-class IntParser(parser_base.Parser[int], is_default_for=(int,)):
+@parser_base.register_parser_for(int)
+class IntParser(parser_base.Parser[int]):
     """Specialised number parser for integers.
 
     This parser can be either signed or unsigned. The default int parser is
@@ -177,7 +178,7 @@ class IntParser(parser_base.Parser[int], is_default_for=(int,)):
         self.signed = signed
         self.parser_base = parser_base
 
-    def loads(self, _source: object, argument: str) -> int:  # noqa: D102
+    def loads(self, argument: str) -> int:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
 
         result = int(argument, self.parser_base)
@@ -199,7 +200,8 @@ _DEFAULT_TRUES = frozenset(["true", "t", "yes", "y", "1"])
 _DEFAULT_FALSES = frozenset(["false", "f", "no", "n", "0"])
 
 
-class BoolParser(parser_base.Parser[bool], is_default_for=(bool,)):
+@parser_base.register_parser_for(bool)
+class BoolParser(parser_base.Parser[bool]):
     """Parser type with support for bools.
 
     This parser type can be supplied with a collection of strings for the
@@ -217,7 +219,7 @@ class BoolParser(parser_base.Parser[bool], is_default_for=(bool,)):
         self.trues = _DEFAULT_TRUES if trues is None else trues
         self.falses = _DEFAULT_FALSES if falses is None else falses
 
-    def loads(self, _source: object, argument: str) -> bool:  # noqa: D102
+    def loads(self, argument: str) -> bool:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
 
         if argument in self.trues:
@@ -244,10 +246,11 @@ class BoolParser(parser_base.Parser[bool], is_default_for=(bool,)):
 # STRING
 
 
-class StringParser(parser_base.Parser[str], is_default_for=(str,)):  # noqa: D101
+@parser_base.register_parser_for(str)
+class StringParser(parser_base.Parser[str]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
-    def loads(self, _source: object, argument: str) -> str:  # noqa: D102
+    def loads(self, argument: str) -> str:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
         return argument
 
@@ -271,9 +274,8 @@ class _Resolution(int, enum.Enum):
 
 # TODO: Is forcing the use of timezones on users really a parser_based move?
 #       Probably.
-class DatetimeParser(
-    parser_base.Parser[datetime.datetime], is_default_for=(datetime.datetime,)
-):
+@parser_base.register_parser_for(datetime.datetime)
+class DatetimeParser(parser_base.Parser[datetime.datetime]):
     """Parser type with support for datetimes.
 
     Parameters
@@ -302,7 +304,7 @@ class DatetimeParser(
         self.resolution = resolution
         self.timezone = timezone
 
-    def loads(self, _source: object, argument: str) -> datetime.datetime:  # noqa: D102
+    def loads(self, argument: str) -> datetime.datetime:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
 
         return datetime.datetime.fromtimestamp(float(argument), tz=self.timezone)
@@ -323,36 +325,33 @@ class DatetimeParser(
         return str(int(timestamp // self.resolution) * self.resolution)
 
 
-class DateParser(  # noqa: D101
-    parser_base.Parser[datetime.date], is_default_for=(datetime.date,)
-):
-    def loads(self, _source: object, argument: str) -> datetime.date:  # noqa: D102
+@parser_base.register_parser_for(datetime.date)
+class DateParser(parser_base.Parser[datetime.date]):  # noqa: D101
+    def loads(self, argument: str) -> datetime.date:  # noqa: D102
         return datetime.date.fromordinal(int(argument))
 
     def dumps(self, argument: datetime.date) -> str:  # noqa: D102
         return str(datetime.date.toordinal(argument))
 
 
-class TimeParser(  # noqa: D101
-    parser_base.Parser[datetime.time], is_default_for=(datetime.time,)
-):
-    def loads(self, _source: object, argument: str) -> datetime.time:  # noqa: D102
+@parser_base.register_parser_for(datetime.time)
+class TimeParser(parser_base.Parser[datetime.time]):  # noqa: D101
+    def loads(self, argument: str) -> datetime.time:  # noqa: D102
         return datetime.time.fromisoformat(argument)
 
     def dumps(self, argument: datetime.time) -> str:  # noqa: D102
         return datetime.time.isoformat(argument)
 
 
-class TimedeltaParser(  # noqa: D101
-    parser_base.Parser[datetime.timedelta], is_default_for=(datetime.timedelta,)
-):
+@parser_base.register_parser_for(datetime.timedelta)
+class TimedeltaParser(parser_base.Parser[datetime.timedelta]):  # noqa: D101
     float_parser: FloatParser
 
     def __init__(self, float_parser: typing.Optional[FloatParser] = None):
         self.float_parser = float_parser or FloatParser()
 
-    def loads(self, _source: object, argument: str) -> datetime.timedelta:  # noqa: D102
-        return datetime.timedelta(seconds=self.float_parser.loads(_source, argument))
+    def loads(self, argument: str) -> datetime.timedelta:  # noqa: D102
+        return datetime.timedelta(seconds=self.float_parser.loads(argument))
 
     def dumps(self, argument: datetime.timedelta) -> str:  # noqa: D102
         return self.float_parser.dumps(argument.total_seconds())
@@ -361,16 +360,15 @@ class TimedeltaParser(  # noqa: D101
 # NOTE: I assume seconds resolution for timezones is more than enough.
 #       I would honestly assume even minutes are enough, though they
 #       technically support going all the way down to microseconds.
-class TimezoneParser(  # noqa: D101
-    parser_base.Parser[datetime.timezone], is_default_for=(datetime.timezone,)
-):
+@parser_base.register_parser_for(datetime.timezone)
+class TimezoneParser(parser_base.Parser[datetime.timezone]):  # noqa: D101
     timedelta_parser: TimedeltaParser
 
     def __init__(self, timedelta_parser: typing.Optional[TimedeltaParser] = None):
         self.timedelta_parser = timedelta_parser or TimedeltaParser()
 
-    def loads(self, _source: object, argument: str) -> datetime.timezone:  # noqa: D102
-        return datetime.timezone(self.timedelta_parser.loads(_source, argument))
+    def loads(self, argument: str) -> datetime.timezone:  # noqa: D102
+        return datetime.timezone(self.timedelta_parser.loads(argument))
 
     def dumps(self, argument: datetime.timezone) -> str:  # noqa: D102
         return self.timedelta_parser.dumps(argument.utcoffset(None))
@@ -403,11 +401,8 @@ def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_Collec
 # NOTE: TupleParser *must* be registered before CollectionParser!
 
 
-class TupleParser(
-    parser_base.Parser[_TupleT],
-    typing.Generic[_TupleT],
-    is_default_for=(typing.Tuple[object, ...],),
-):
+@parser_base.register_parser_for(tuple)
+class TupleParser(parser_base.SourcedParser[_TupleT]):
     """Parser type with support for tuples.
 
     The benefit of a tuple parser is fixed-length checks and the ability to set
@@ -428,19 +423,19 @@ class TupleParser(
 
     """
 
-    inner_parsers: typing.Tuple[parser_base.Parser[typing.Any], ...]
+    inner_parsers: typing.Tuple[parser_base.AnyParser, ...]
     sep: str
 
     def __init__(
         self,
-        *inner_parsers: parser_base.Parser[typing.Any],
+        *inner_parsers: parser_base.AnyParser,
         sep: str = ",",
     ) -> None:
         self.inner_parsers = inner_parsers
         self.sep = sep
 
     async def loads(  # noqa: D102
-        self, interaction: disnake.Interaction, argument: str
+        self, argument: str, *, source: disnake.Interaction
     ) -> _TupleT:
         # <<docstring inherited from parser_api.Parser>>
         parts = argument.split(self.sep)
@@ -453,7 +448,7 @@ class TupleParser(
             _TupleT,
             tuple(
                 [
-                    await aio.eval_maybe_coro(parser.loads(interaction, part))
+                    await parser_base.try_loads(parser, part, source=source)
                     for parser, part in zip(self.inner_parsers, parts)
                 ]
             ),
@@ -473,10 +468,8 @@ class TupleParser(
         )
 
 
-class CollectionParser(
-    parser_base.Parser[_CollectionT],
-    is_default_for=(typing.Collection[object],),
-):
+@parser_base.register_parser_for(typing.Collection)
+class CollectionParser(parser_base.SourcedParser[_CollectionT]):
     """Parser type with support for collections of other types.
 
     This parser parses a string into a given container type and inner type, and
@@ -519,13 +512,16 @@ class CollectionParser(
         )
 
     async def loads(  # noqa: D102
-        self, interaction: disnake.Interaction, argument: str
+        self,
+        argument: str,
+        *,
+        source: disnake.Interaction,
     ) -> _CollectionT:
         # <<docstring inherited from parser_api.Parser>>
         parsed = [
-            await aio.eval_maybe_coro(self.inner_parser.loads(interaction, part))
+            await parser_base.try_loads(self.inner_parser, part, source=source)
             for part in argument.split(self.sep)
-            if not part.isspace()
+            if not part.isspace()  # TODO: Verify if this should be removed
         ]
 
         return self.collection_type(parsed)  # pyright: ignore[reportCallIssue]
@@ -542,11 +538,8 @@ class CollectionParser(
         )
 
 
-class UnionParser(  # pyright: ignore[reportGeneralTypeIssues]
-    parser_base.Parser[_T],
-    typing.Generic[_T],
-    is_default_for=(typing.Union,),  # pyright: ignore[reportArgumentType]
-):
+@parser_base.register_parser_for(typing.Union)  # pyright: ignore[reportArgumentType]
+class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
     """Parser type with support for unions.
 
     Provided parsers are sequentially tried until one passes. If none work, an
@@ -581,7 +574,7 @@ class UnionParser(  # pyright: ignore[reportGeneralTypeIssues]
                 self.inner_parsers.append(parser)
 
     async def loads(  # noqa: D102
-        self, interaction: disnake.Interaction, argument: str
+        self, argument: str, *, source: disnake.Interaction
     ) -> _T:
         # <<docstring inherited from parser_api.Parser>>
         if not argument and self.optional:
@@ -592,10 +585,7 @@ class UnionParser(  # pyright: ignore[reportGeneralTypeIssues]
         # Try all parsers sequentially. If any succeeds, return the result.
         for parser in self.inner_parsers:
             with contextlib.suppress(Exception):
-                return typing.cast(
-                    _T,
-                    await aio.eval_maybe_coro(parser.loads(interaction, argument)),
-                )
+                return await parser_base.try_loads(parser, argument, source=source)
 
         msg = "Failed to parse input to any type in the Union."
         raise RuntimeError(msg)
