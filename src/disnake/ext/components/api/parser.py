@@ -200,4 +200,7 @@ class SourcedParser(typing.Protocol[ParserType, SourceType]):
         ...
 
 
-AnyParser: typing_extensions.TypeAlias = typing.Union[Parser, SourcedParser]
+ParserWithArgumentType: typing_extensions.TypeAlias = typing.Union[
+    Parser[ParserType], SourcedParser[ParserType, typing.Any]
+]
+AnyParser: typing_extensions.TypeAlias = ParserWithArgumentType[typing.Any]
