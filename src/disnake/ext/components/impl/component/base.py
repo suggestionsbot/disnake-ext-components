@@ -47,7 +47,7 @@ def _determine_parser(
     overwrite: typing.Optional[_AnyAttr],
     *,
     required: bool = True,
-) -> typing.Optional[parser_api.Parser[typing.Any]]:
+) -> typing.Optional[parser_api.AnyParser]:
     parser = fields.get_parser(attribute)
     if parser:
         return parser

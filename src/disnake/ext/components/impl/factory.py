@@ -18,7 +18,7 @@ if typing.TYPE_CHECKING:
 __all__: typing.Sequence[str] = ("ComponentFactory",)
 
 
-ParserMapping = typing.Mapping[str, parser_api.Parser[typing.Any]]
+ParserMapping = typing.Mapping[str, parser_base.AnyParser]
 
 
 @attr.define(slots=True)
@@ -44,16 +44,16 @@ class ComponentFactory(
         component: typing.Type[component_api.RichComponent],
     ) -> typing_extensions.Self:
         # <<docstring inherited from api.components.ComponentFactory>>
+        parser: typing.Optional[parser_api.AnyParser]
 
-        parser: typing.Optional[parser_api.Parser[typing.Any]]
-
-        parsers: typing.Dict[str, parser_api.Parser[typing.Any]] = {}
+        parsers: typing.Dict[str, parser_base.AnyParser] = {}
         for field in fields.get_fields(component, kind=fields.FieldType.CUSTOM_ID):
             parser = fields.get_parser(field)
 
             if not parser:
                 parser = parser_base.get_parser(field.type or str).default()
 
+            assert isinstance(parser, (parser_base.Parser, parser_base.SourcedParser))
             parsers[field.name] = parser
 
         return cls(
@@ -63,20 +63,21 @@ class ComponentFactory(
 
     async def loads_param(
         self,
-        source: object,
         param: str,
         value: str,
+        *,
+        source: object,
     ) -> object:
         """Parse a single custom id parameter to the desired type with its parser.
 
         Parameters
         ----------
-        source:
-            The source object used to parse the custom id parameter.
         param:
             The name of the custom id field that is to be parsed.
         value:
             The value of the custom id field that is to be parsed.
+        source:
+            The source object used to parse the custom id parameter.
 
         Returns
         -------
@@ -85,8 +86,7 @@ class ComponentFactory(
 
         """
         parser = self.parsers[param]
-        result = parser.loads(source, value)
-        return await aio.eval_maybe_coro(result)
+        return await parser_base.try_loads(parser, value, source=source)
 
     async def dumps_param(
         self,
@@ -129,7 +129,7 @@ class ComponentFactory(
             raise ValueError(message)
 
         return {
-            param: await self.loads_param(source, param, value)
+            param: await self.loads_param(param, value, source=source)
             for param, value in zip(self.parsers, params)
             if value
         }

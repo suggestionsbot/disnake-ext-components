@@ -217,6 +217,7 @@ class _ParserBase(typing.Protocol[parser_api.ParserType]):
         ...
 
 
+@typing.runtime_checkable
 class Parser(
     _ParserBase[parser_api.ParserType],
     parser_api.Parser[parser_api.ParserType],
@@ -239,6 +240,7 @@ class Parser(
         ...
 
 
+@typing.runtime_checkable
 class SourcedParser(
     _ParserBase[parser_api.ParserType],
     parser_api.SourcedParser[parser_api.ParserType, parser_api.SourceType],
