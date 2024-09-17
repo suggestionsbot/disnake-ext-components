@@ -14,8 +14,7 @@ _KEY: typing.Final[str] = "EXAMPLE_TOKEN"
 
 def _main() -> typing.NoReturn:
     # First, get the token from dotenv.
-    dotenv.load_dotenv()
-
+    dotenv.load_dotenv(override=True)
     token = os.getenv(_KEY)
     if not token:
         print("Token not found! Please set 'EXAMPLE_TOKEN' in .env.")
