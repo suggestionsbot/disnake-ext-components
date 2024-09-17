@@ -16,10 +16,8 @@ __all__: typing.Sequence[str] = (
 )
 
 
-class GetUserParser(  # noqa: D101
-    parser_base.Parser[disnake.User],
-    is_default_for=(disnake.User, disnake.abc.User),
-):
+@parser_base.register_parser_for(disnake.User, disnake.abc.User)
+class GetUserParser(parser_base.SourcedParser[disnake.User]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -27,7 +25,7 @@ class GetUserParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, source: helpers.BotAware, argument: str
+        self, argument: str, *, source: helpers.BotAware
     ) -> disnake.User:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -40,10 +38,8 @@ class GetUserParser(  # noqa: D101
         return user
 
 
-class GetMemberParser(  # noqa: D101
-    parser_base.Parser[disnake.Member],
-    is_default_for=(disnake.Member,),
-):
+@parser_base.register_parser_for(disnake.Member)
+class GetMemberParser(parser_base.SourcedParser[disnake.Member]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -52,12 +48,13 @@ class GetMemberParser(  # noqa: D101
 
     def loads(  # noqa: D102
         self,
+        argument: str,
+        *,
         source: typing.Union[
             helpers.GuildAware,
             helpers.MessageAware,
             helpers.ChannelAware,
         ],
-        argument: str,
     ) -> disnake.Member:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -83,9 +80,8 @@ class GetMemberParser(  # noqa: D101
         raise LookupError(msg)
 
 
-class UserParser(  # noqa: D101
-    parser_base.Parser[disnake.User], is_default_for=(disnake.User, disnake.abc.User)
-):
+@parser_base.register_parser_for(disnake.User)
+class UserParser(parser_base.SourcedParser[disnake.User]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -93,7 +89,7 @@ class UserParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     async def loads(  # noqa: D102
-        self, source: helpers.BotAware, argument: str
+        self, argument: str, *, source: helpers.BotAware
     ) -> disnake.User:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -103,9 +99,8 @@ class UserParser(  # noqa: D101
         )  # fmt: skip
 
 
-class MemberParser(  # noqa: D101
-    parser_base.Parser[disnake.Member], is_default_for=(disnake.Member,)
-):
+@parser_base.register_parser_for(disnake.Member)
+class MemberParser(parser_base.SourcedParser[disnake.Member]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -114,12 +109,13 @@ class MemberParser(  # noqa: D101
 
     async def loads(  # noqa: D102
         self,
+        argument: str,
+        *,
         source: typing.Union[
             helpers.GuildAware,
             helpers.MessageAware,
             helpers.ChannelAware,
         ],
-        argument: str,
     ) -> disnake.Member:
         # <<docstring inherited from parser_api.Parser>>
 

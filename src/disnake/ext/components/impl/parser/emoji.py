@@ -20,10 +20,8 @@ __all__: typing.Sequence[str] = (
 # GET_ONLY
 
 
-class GetEmojiParser(  # noqa: D101
-    parser_base.Parser[disnake.Emoji],
-    is_default_for=(disnake.Emoji,),
-):
+@parser_base.register_parser_for(disnake.Emoji)
+class GetEmojiParser(parser_base.SourcedParser[disnake.Emoji]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -31,7 +29,7 @@ class GetEmojiParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, source: helpers.BotAware, argument: str
+        self, argument: str, *, source: helpers.BotAware
     ) -> disnake.Emoji:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -44,10 +42,8 @@ class GetEmojiParser(  # noqa: D101
         return emoji
 
 
-class GetStickerParser(  # noqa: D101
-    parser_base.Parser[disnake.Sticker],
-    is_default_for=(disnake.Sticker,),
-):
+@parser_base.register_parser_for(disnake.Sticker)
+class GetStickerParser(parser_base.SourcedParser[disnake.Sticker]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -55,7 +51,7 @@ class GetStickerParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, source: helpers.BotAware, argument: str
+        self, argument: str, *, source: helpers.BotAware
     ) -> disnake.Sticker:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -71,10 +67,8 @@ class GetStickerParser(  # noqa: D101
 # GET AND FETCH
 
 
-class EmojiParser(  # noqa: D101
-    parser_base.Parser[disnake.Emoji],
-    is_default_for=(disnake.Emoji,),
-):
+@parser_base.register_parser_for(disnake.Emoji)
+class EmojiParser(parser_base.SourcedParser[disnake.Emoji]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -82,7 +76,7 @@ class EmojiParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     async def loads(  # noqa: D102
-        self, source: helpers.BotAndGuildAware, argument: str
+        self, argument: str, *, source: helpers.BotAndGuildAware
     ) -> disnake.Emoji:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -99,10 +93,8 @@ class EmojiParser(  # noqa: D101
         )  # fmt: skip
 
 
-class PartialEmojiParser(  # noqa: D101
-    parser_base.Parser[disnake.PartialEmoji],
-    is_default_for=(disnake.PartialEmoji,),
-):
+@parser_base.register_parser_for(disnake.PartialEmoji)
+class PartialEmojiParser(parser_base.Parser[disnake.PartialEmoji]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def dumps(self, __argument: disnake.PartialEmoji) -> str:  # noqa: D102
@@ -110,14 +102,12 @@ class PartialEmojiParser(  # noqa: D101
 
         return str(__argument.id)
 
-    def loads(self, _: object, argument: str) -> disnake.PartialEmoji:  # noqa: D102
+    def loads(self, argument: str) -> disnake.PartialEmoji:  # noqa: D102
         return disnake.PartialEmoji.from_dict({"id": int(argument)})
 
 
-class StickerParser(  # noqa: D101
-    parser_base.Parser[disnake.Sticker],
-    is_default_for=(disnake.Sticker,),
-):
+@parser_base.register_parser_for(disnake.Sticker)
+class StickerParser(parser_base.SourcedParser[disnake.Sticker]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -125,7 +115,7 @@ class StickerParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     async def loads(  # noqa: D102
-        self, source: helpers.BotAndGuildAware, argument: str
+        self, argument: str, *, source: helpers.BotAndGuildAware
     ) -> disnake.Sticker:
         # <<docstring inherited from parser_api.Parser>>
 

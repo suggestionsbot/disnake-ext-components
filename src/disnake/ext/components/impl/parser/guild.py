@@ -11,10 +11,8 @@ from disnake.ext.components.impl.parser import helpers, snowflake
 __all__: typing.Sequence[str] = ("GuildParser", "GetGuildParser")
 
 
-class GetGuildParser(  # noqa: D101
-    parser_base.Parser[disnake.Guild],
-    is_default_for=(disnake.Guild,),
-):
+@parser_base.register_parser_for(disnake.Guild)
+class GetGuildParser(parser_base.SourcedParser[disnake.Guild]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -22,7 +20,10 @@ class GetGuildParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, source: typing.Union[helpers.BotAware, helpers.GuildAware], argument: str
+        self,
+        argument: str,
+        *,
+        source: typing.Union[helpers.BotAware, helpers.GuildAware],
     ) -> disnake.Guild:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -43,10 +44,8 @@ class GetGuildParser(  # noqa: D101
         raise LookupError(msg)
 
 
-class GuildParser(  # noqa: D101
-    parser_base.Parser[disnake.Guild],
-    is_default_for=(disnake.Guild,),
-):
+@parser_base.register_parser_for(disnake.Guild)
+class GuildParser(parser_base.SourcedParser[disnake.Guild]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -54,7 +53,10 @@ class GuildParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     async def loads(  # noqa: D102
-        self, source: typing.Union[helpers.BotAware, helpers.GuildAware], argument: str
+        self,
+        argument: str,
+        *,
+        source: typing.Union[helpers.BotAware, helpers.GuildAware],
     ) -> disnake.Guild:
         # <<docstring inherited from parser_api.Parser>>
 

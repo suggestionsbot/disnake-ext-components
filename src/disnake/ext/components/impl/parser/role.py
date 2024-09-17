@@ -14,10 +14,8 @@ __all__: typing.Sequence[str] = (
 )
 
 
-class GetRoleParser(  # noqa: D101
-    parser_base.Parser[disnake.Role],
-    is_default_for=(disnake.Role,),
-):
+@parser_base.register_parser_for(disnake.Role)
+class GetRoleParser(parser_base.SourcedParser[disnake.Role]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -26,12 +24,13 @@ class GetRoleParser(  # noqa: D101
 
     def loads(  # noqa: D102
         self,
+        argument: str,
+        *,
         source: typing.Union[
             helpers.GuildAware,
             helpers.MessageAware,
             helpers.ChannelAware,
         ],
-        argument: str,
     ) -> disnake.Role:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -61,10 +60,8 @@ class GetRoleParser(  # noqa: D101
         raise LookupError(msg)
 
 
-class RoleParser(  # noqa: D101
-    parser_base.Parser[disnake.Role],
-    is_default_for=(disnake.Role,),
-):
+@parser_base.register_parser_for(disnake.Role)
+class RoleParser(parser_base.SourcedParser[disnake.Role]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -73,12 +70,13 @@ class RoleParser(  # noqa: D101
 
     async def loads(  # noqa: D102
         self,
+        argument: str,
+        *,
         source: typing.Union[
             helpers.GuildAware,
             helpers.MessageAware,
             helpers.ChannelAware,
         ],
-        argument: str,
     ) -> disnake.Role:
         # <<docstring inherited from parser_api.Parser>>
 

@@ -11,9 +11,8 @@ from disnake.ext.components.impl.parser import helpers
 __all__: typing.Sequence[str] = ("InviteParser",)
 
 
-class InviteParser(  # noqa: D101
-    parser_base.Parser[disnake.Invite], is_default_for=(disnake.Invite,)
-):
+@parser_base.register_parser_for(disnake.Invite)
+class InviteParser(parser_base.SourcedParser[disnake.Invite]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(
@@ -28,7 +27,7 @@ class InviteParser(  # noqa: D101
         self.guild_scheduled_event_id = guild_scheduled_event_id
 
     async def loads(  # noqa: D102
-        self, source: helpers.BotAware, argument: str
+        self, argument: str, *, source: helpers.BotAware
     ) -> disnake.Invite:
         # <<docstring inherited from parser_api.Parser>>
 

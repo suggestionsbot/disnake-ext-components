@@ -23,9 +23,8 @@ AnyChannel = typing.Union[
 ]
 
 
-class GetMessageParser(  # noqa: D101
-    parser_base.Parser[disnake.Message], is_default_for=(disnake.Message,)
-):
+@parser_base.register_parser_for(disnake.Message)
+class GetMessageParser(parser_base.SourcedParser[disnake.Message]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -34,8 +33,9 @@ class GetMessageParser(  # noqa: D101
 
     def loads(  # noqa: D102
         self,
-        source: typing.Union[helpers.BotAware, helpers.MessageAware],
         argument: str,
+        *,
+        source: typing.Union[helpers.BotAware, helpers.MessageAware],
     ) -> disnake.Message:
         if isinstance(source, helpers.BotAware):
             message = source.bot.get_message(int(argument))
@@ -52,10 +52,8 @@ class GetMessageParser(  # noqa: D101
         raise LookupError(msg)
 
 
-class MessageParser(  # noqa: D101
-    parser_base.Parser[disnake.Message],
-    is_default_for=(disnake.Message,),
-):
+@parser_base.register_parser_for(disnake.Message)
+class MessageParser(parser_base.SourcedParser[disnake.Message]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
@@ -63,7 +61,7 @@ class MessageParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     async def loads(  # noqa: D102
-        self, source: helpers.ChannelAware, argument: str
+        self, argument: str, *, source: helpers.ChannelAware
     ) -> disnake.Message:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -75,9 +73,8 @@ class MessageParser(  # noqa: D101
         return await source.channel.fetch_message(int(argument))
 
 
-class PartialMessageParser(  # noqa: D101
-    parser_base.Parser[disnake.PartialMessage], is_default_for=(disnake.PartialMessage,)
-):
+@parser_base.register_parser_for(disnake.PartialMessage)
+class PartialMessageParser(parser_base.SourcedParser[disnake.PartialMessage]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self, channel: typing.Optional[AnyChannel] = None) -> None:
@@ -85,7 +82,7 @@ class PartialMessageParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, source: helpers.ChannelAware, argument: str
+        self, argument: str, *, source: helpers.ChannelAware
     ) -> disnake.PartialMessage:
         # <<docstring inherited from parser_api.Parser>>
 

@@ -15,17 +15,15 @@ def snowflake_dumps(argument: disnake.abc.Snowflake) -> str:
     return str(argument.id)
 
 
-class SnowflakeParser(  # noqa: D101
-    parser_base.Parser[disnake.Object],
-    is_default_for=(disnake.abc.Snowflake, disnake.Object),
-):
+@parser_base.register_parser_for(disnake.abc.Snowflake, disnake.Object)
+class SnowflakeParser(parser_base.Parser[disnake.Object]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(self) -> None:
         super().__init__()
         self.dumps = snowflake_dumps
 
-    def loads(self, _: object, argument: str) -> disnake.Object:  # noqa: D102
+    def loads(self, argument: str) -> disnake.Object:  # noqa: D102
         return disnake.Object(int(argument))
 
 

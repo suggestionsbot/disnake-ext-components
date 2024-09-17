@@ -36,10 +36,10 @@ def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> type:
     raise TypeError(msg)
 
 
-class EnumParser(
-    parser_base.Parser[_EnumT],
-    is_default_for=(enum.Enum, disnake.Enum, enum.Flag, disnake.flags.BaseFlags),
-):
+@parser_base.register_parser_for(
+    enum.Enum, disnake.Enum, enum.Flag, disnake.flags.BaseFlags
+)
+class EnumParser(parser_base.SourcedParser[_EnumT]):
     """Parser type for enums and flags.
 
     Enums and flags are stored by value instead of by name. This makes parsing
@@ -57,16 +57,16 @@ class EnumParser(
     """
 
     enum_class: typing.Type[_EnumT]
-    value_parser: parser_base.Parser[typing.Any]
+    value_parser: parser_base.AnyParser
 
     def __init__(self, enum_class: typing.Type[_EnumT]) -> None:
         self.enum_class = enum_class
         self.value_parser = parser_base.get_parser(_get_enum_type(enum_class))
 
-    async def loads(self, source: object, argument: str) -> _EnumT:  # noqa: D102
+    async def loads(self, argument: str, *, source: object) -> _EnumT:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
 
-        parsed = await aio.eval_maybe_coro(self.value_parser.loads(source, argument))
+        parsed = await parser_base.try_loads(self.value_parser, argument, source=source)
         return self.enum_class(parsed)  # pyright: ignore[reportCallIssue]
 
     async def dumps(self, argument: _EnumT) -> str:  # noqa: D102

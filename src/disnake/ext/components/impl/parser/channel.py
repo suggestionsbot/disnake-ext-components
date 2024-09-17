@@ -28,6 +28,7 @@ __all__: typing.Sequence[str] = (
     "NewsChannelParser",
     "StageChannelParser",
     "TextChannelParser",
+    "ThreadParser",
     "VoiceChannelParser",
     "CategoryParser",
     "GetDMChannelParser",
@@ -38,6 +39,7 @@ __all__: typing.Sequence[str] = (
     "GetNewsChannelParser",
     "GetStageChannelParser",
     "GetTextChannelParser",
+    "GetThreadParser",
     "GetVoiceChannelParser",
     "GetCategoryParser",
     "PartialMessageableParser",
@@ -75,7 +77,7 @@ def _get_source(
 # GET_ONLY
 
 
-class GetChannelParserBase(parser_base.Parser[_ChannelT]):
+class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     # <<docstring inherited from parser_api.Parser>>
 
     parser_type: typing.Type[_ChannelT]
@@ -86,10 +88,11 @@ class GetChannelParserBase(parser_base.Parser[_ChannelT]):
 
     def loads(
         self,
+        argument: str,
+        *,
         source: typing.Union[
             helpers.GuildAware, helpers.BotAware, helpers.MessageAware
         ],
-        argument: str,
     ) -> _ChannelT:
         # <<docstring inherited from parser_api.Parser>>
 
@@ -111,7 +114,7 @@ class GetChannelParserBase(parser_base.Parser[_ChannelT]):
 # GET AND FETCH
 
 
-class ChannelParserBase(parser_base.Parser[_ChannelT]):
+class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     # <<docstring inherited from parser_api.Parser>>
 
     parser_type: typing.Type[_ChannelT]
@@ -120,13 +123,13 @@ class ChannelParserBase(parser_base.Parser[_ChannelT]):
         super().__init__()
         self.dumps = snowflake.snowflake_dumps
 
-    async def loads(self, inter: disnake.Interaction, argument: str) -> _ChannelT:
+    async def loads(self, argument: str, *, source: disnake.Interaction) -> _ChannelT:
         # <<docstring inherited from parser_api.Parser>>
 
         channel_id = int(argument)
         channel = (
-            inter.bot.get_channel(channel_id)
-            or await inter.bot.fetch_channel(channel_id)
+            source.bot.get_channel(channel_id)
+            or await source.bot.fetch_channel(channel_id)
         )  # fmt: skip
 
         if not isinstance(channel, self.parser_type):
@@ -141,18 +144,14 @@ class ChannelParserBase(parser_base.Parser[_ChannelT]):
 # ABSTRACT
 
 
-class GetGuildChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.abc.GuildChannel],
-    is_default_for=(disnake.abc.GuildChannel,),
-):
+@parser_base.register_parser_for(disnake.abc.GuildChannel)
+class GetGuildChannelParser(GetChannelParserBase[disnake.abc.GuildChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.abc.GuildChannel
 
 
-class GetPrivateChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.abc.PrivateChannel],
-    is_default_for=(disnake.abc.PrivateChannel,),
-):
+@parser_base.register_parser_for(disnake.abc.PrivateChannel)
+class GetPrivateChannelParser(GetChannelParserBase[disnake.abc.PrivateChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.abc.PrivateChannel  # pyright: ignore[reportAssignmentType]
 
@@ -160,18 +159,14 @@ class GetPrivateChannelParser(  # noqa: D101
 # PRIVATE
 
 
-class GetDMChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.DMChannel],
-    is_default_for=(disnake.DMChannel,),
-):
+@parser_base.register_parser_for(disnake.DMChannel)
+class GetDMChannelParser(GetChannelParserBase[disnake.DMChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.DMChannel
 
 
-class GetGroupChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.GroupChannel],
-    is_default_for=(disnake.GroupChannel,),
-):
+@parser_base.register_parser_for(disnake.GroupChannel)
+class GetGroupChannelParser(GetChannelParserBase[disnake.GroupChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.GroupChannel
 
@@ -179,58 +174,44 @@ class GetGroupChannelParser(  # noqa: D101
 # GUILD
 
 
-class GetForumChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.ForumChannel],
-    is_default_for=(disnake.ForumChannel,),
-):
+@parser_base.register_parser_for(disnake.ForumChannel)
+class GetForumChannelParser(GetChannelParserBase[disnake.ForumChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.ForumChannel
 
 
-class GetNewsChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.NewsChannel],
-    is_default_for=(disnake.NewsChannel,),
-):
+@parser_base.register_parser_for(disnake.NewsChannel)
+class GetNewsChannelParser(GetChannelParserBase[disnake.NewsChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.NewsChannel
 
 
-class GetVoiceChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.VoiceChannel],
-    is_default_for=(disnake.VoiceChannel,),
-):
+@parser_base.register_parser_for(disnake.VoiceChannel)
+class GetVoiceChannelParser(GetChannelParserBase[disnake.VoiceChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.VoiceChannel
 
 
-class GetStageChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.StageChannel],
-    is_default_for=(disnake.StageChannel,),
-):
+@parser_base.register_parser_for(disnake.StageChannel)
+class GetStageChannelParser(GetChannelParserBase[disnake.StageChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.StageChannel
 
 
-class GetTextChannelParser(  # noqa: D101
-    GetChannelParserBase[disnake.TextChannel],
-    is_default_for=(disnake.TextChannel,),
-):
+@parser_base.register_parser_for(disnake.TextChannel)
+class GetTextChannelParser(GetChannelParserBase[disnake.TextChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.TextChannel
 
 
-class GetThreadParser(
-    GetChannelParserBase[disnake.Thread],
-    is_default_for=(disnake.Thread,),
-):
+@parser_base.register_parser_for(disnake.Thread)
+class GetThreadParser(GetChannelParserBase[disnake.Thread]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.Thread
 
 
-class GetCategoryParser(  # noqa: D101
-    GetChannelParserBase[disnake.CategoryChannel],
-    is_default_for=(disnake.CategoryChannel,),
-):
+@parser_base.register_parser_for(disnake.CategoryChannel)
+class GetCategoryParser(GetChannelParserBase[disnake.CategoryChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.CategoryChannel
 
@@ -238,18 +219,14 @@ class GetCategoryParser(  # noqa: D101
 # ASYNC ABSTRACT
 
 
-class GuildChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.abc.GuildChannel],
-    is_default_for=(disnake.abc.GuildChannel,),
-):
+@parser_base.register_parser_for(disnake.abc.GuildChannel)
+class GuildChannelParser(ChannelParserBase[disnake.abc.GuildChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.abc.GuildChannel
 
 
-class PrivateChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.abc.PrivateChannel],
-    is_default_for=(disnake.abc.PrivateChannel,),
-):
+@parser_base.register_parser_for(disnake.abc.PrivateChannel)
+class PrivateChannelParser(ChannelParserBase[disnake.abc.PrivateChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.abc.PrivateChannel  # pyright: ignore[reportAssignmentType]
 
@@ -257,18 +234,14 @@ class PrivateChannelParser(  # noqa: D101
 # ASYNC PRIVATE
 
 
-class DMChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.DMChannel],
-    is_default_for=(disnake.DMChannel,),
-):
+@parser_base.register_parser_for(disnake.DMChannel)
+class DMChannelParser(ChannelParserBase[disnake.DMChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.DMChannel
 
 
-class GroupChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.GroupChannel],
-    is_default_for=(disnake.GroupChannel,),
-):
+@parser_base.register_parser_for(disnake.GroupChannel)
+class GroupChannelParser(ChannelParserBase[disnake.GroupChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.GroupChannel
 
@@ -276,66 +249,50 @@ class GroupChannelParser(  # noqa: D101
 # ASYNC GUILD
 
 
-class ForumChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.ForumChannel],
-    is_default_for=(disnake.ForumChannel,),
-):
+@parser_base.register_parser_for(disnake.ForumChannel)
+class ForumChannelParser(ChannelParserBase[disnake.ForumChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.ForumChannel
 
 
-class NewsChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.NewsChannel],
-    is_default_for=(disnake.NewsChannel,),
-):
+@parser_base.register_parser_for(disnake.NewsChannel)
+class NewsChannelParser(ChannelParserBase[disnake.NewsChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.NewsChannel
 
 
-class VoiceChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.VoiceChannel],
-    is_default_for=(disnake.VoiceChannel,),
-):
+@parser_base.register_parser_for(disnake.VoiceChannel)
+class VoiceChannelParser(ChannelParserBase[disnake.VoiceChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.VoiceChannel
 
 
-class StageChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.StageChannel],
-    is_default_for=(disnake.StageChannel,),
-):
+@parser_base.register_parser_for(disnake.StageChannel)
+class StageChannelParser(ChannelParserBase[disnake.StageChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.StageChannel
 
 
-class TextChannelParser(  # noqa: D101
-    ChannelParserBase[disnake.TextChannel],
-    is_default_for=(disnake.TextChannel,),
-):
+@parser_base.register_parser_for(disnake.TextChannel)
+class TextChannelParser(ChannelParserBase[disnake.TextChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.TextChannel
 
 
-class ThreadParser(
-    ChannelParserBase[disnake.Thread],
-    is_default_for=(disnake.Thread,),
-):
+@parser_base.register_parser_for(disnake.Thread)
+class ThreadParser(ChannelParserBase[disnake.Thread]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.Thread
 
 
-class CategoryParser(  # noqa: D101
-    ChannelParserBase[disnake.CategoryChannel],
-    is_default_for=(disnake.CategoryChannel,),
-):
+@parser_base.register_parser_for(disnake.CategoryChannel)
+class CategoryParser(ChannelParserBase[disnake.CategoryChannel]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
     parser_type = disnake.CategoryChannel
 
 
-class PartialMessageableParser(  # noqa: D101
-    parser_base.Parser[disnake.PartialMessageable],
-    is_default_for=(disnake.PartialMessageable,),
-):
+@parser_base.register_parser_for(disnake.PartialMessageable)
+class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessageable]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
     def __init__(
@@ -345,8 +302,8 @@ class PartialMessageableParser(  # noqa: D101
         self.dumps = snowflake.snowflake_dumps
 
     def loads(  # noqa: D102
-        self, inter: disnake.Interaction, argument: str
+        self, argument: str, *, source: helpers.BotAware
     ) -> disnake.PartialMessageable:
         # <<docstring inherited from parser_api.Parser>>
 
-        return inter.bot.get_partial_messageable(int(argument), type=self.channel_type)
+        return source.bot.get_partial_messageable(int(argument), type=self.channel_type)
