@@ -6,6 +6,7 @@ import contextlib
 import datetime
 import enum
 import inspect
+import string
 import typing
 
 import disnake.utils
@@ -47,21 +48,24 @@ _T = typing_extensions.TypeVar("_T")
 
 @parser_base.register_parser_for(_NoneType)
 class NoneParser(parser_base.Parser[None]):
-    """parser_base parser for None.
+    r"""Parser implementation for :obj:`None`.
 
-    Mainly relevant Optional[...] parsers.
+    Mainly relevant for :obj:`~typing.Optional`\[...] parsers.
 
     Parameters
     ----------
     strict: bool
-        Whether this NoneParses is set to strict mode.
+        Whether this parser should be set to :attr:`strict` mode.
 
-        To prevent unforeseen bugs, this defaults to ``True``.
-        See :meth:`loads` and :meth:`dumps` for the implications of strict-mode.
+        To prevent unforeseen bugs, this defaults to :obj:`True`.
 
     """
 
     strict: bool
+    """Whether this parser is set to strict mode.
+
+    See :meth:`loads` and :meth:`dumps` for the implications of strict-mode.
+    """
 
     def __init__(self, *, strict: bool = True) -> None:
         self.strict = strict
@@ -69,7 +73,7 @@ class NoneParser(parser_base.Parser[None]):
     def loads(self, argument: str, /) -> None:
         """Load ``None`` from a string.
 
-        If :attr:``self.strict`` is set to ``True``, this will fail if the
+        If :attr:`strict` is set to ``True``, this will fail if the
         provided ``argument`` isn't the empty string (``""``). Otherwise,
         this parser will *always* return ``None``.
 
@@ -94,14 +98,12 @@ class NoneParser(parser_base.Parser[None]):
     def dumps(self, argument: None) -> str:
         """Dump ``None`` into a string.
 
-        If :attr:``self.strict`` is set to ``True``, this will fail if the
+        If :attr:`strict` is set to ``True``, this will fail if the
         provided ``argument`` isn't exactly ``None``. Otherwise,
         this parser will *always* return ``None``.
 
         Parameters
         ----------
-        _source:
-            Unused.
         argument:
             The value that is to be dumped.
 
@@ -134,27 +136,35 @@ def dumps_float(number: float) -> str:
     return _removesuffix(str(number), ".0")
 
 
+# TODO: decimal.Decimal parser for decimal numbers with set precision?
+
+
 @parser_base.register_parser_for(float)
 class FloatParser(parser_base.Parser[float]):
-    """Specialised number parser for floats.
+    r"""Parser implementation for :class:`float`\s."""
 
-    Strips any trailing zeroes and can be provided with a maximum number of
-    decimal digits.
-    """
+    def loads(self, argument: str) -> float:
+        """Load a floating point number from a string.
 
-    type = float
+        Parameters
+        ----------
+        argument:
+            The value that is to be loaded into a floating point number.
 
-    def __init__(self, digits: typing.Optional[int] = None):
-        self.digits = digits  # TODO: implement
-
-    def loads(self, argument: str) -> float:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
-
+        """
         return float(argument)
 
-    def dumps(self, argument: float) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    def dumps(self, argument: float) -> str:
+        """Dump a floating point number into a string.
 
+        Strips trailing ".0" where possible.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a floating point number.
+
+        """
         return dumps_float(argument)
 
 
@@ -197,18 +207,38 @@ class IntParser(parser_base.Parser[int]):
         self.signed = signed
         self.base = base
 
-    def loads(self, argument: str) -> int:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    def loads(self, argument: str) -> int:
+        r"""Load an integer from a string.
 
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted to an ``int``.
+
+        Raises
+        ------
+        ValueError:
+            The parser has :attr:`signed` set to ``False`` but the argument
+            was a negative number.
+            Alternatively, the provided argument is not a valid integer at all.
+
+        """
         result = int(argument, self.base)
         if not self.signed and result < 0:
             msg = "Unsigned numbers cannot be < 0."
-            raise TypeError(msg)
+            raise ValueError(msg)
 
         return result
 
-    def dumps(self, argument: int) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    def dumps(self, argument: int) -> str:
+        """Dump an integer into a string.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
         # Try to short-circuit as much as possible
         if argument < self.base:
             return str(argument)
@@ -245,7 +275,20 @@ class BoolParser(parser_base.Parser[bool]):
     ``"true", "t", "yes", "y", "1"`` are considered ``True``, while
     ``"false", "f", "no", "n", "0"`` are considered ``False``. Note that this
     is case-insensitive.
+
+    Parameters
+    ----------
+    trues:
+        Values that should be considered ``True`` by this parser.
+    falses:
+        Values that should be considered ``False`` by this parser.
+
     """
+
+    trues: typing.Collection[str]
+    """A collection of values that should be considered ``True`` by this parser."""
+    falses: typing.Collection[str]
+    """A collection of values that should be considered ``False`` by this parser."""
 
     def __init__(
         self,
@@ -255,9 +298,20 @@ class BoolParser(parser_base.Parser[bool]):
         self.trues = _DEFAULT_TRUES if trues is None else trues
         self.falses = _DEFAULT_FALSES if falses is None else falses
 
-    def loads(self, argument: str) -> bool:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    def loads(self, argument: str) -> bool:
+        """Load a boolean from a string.
 
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a boolean.
+
+        Raises
+        ------
+        ValueError:
+            The string is not in :attr:`trues` or :attr:`falses`.
+
+        """
         if argument in self.trues:
             return True
         elif argument in self.falses:
@@ -271,10 +325,20 @@ class BoolParser(parser_base.Parser[bool]):
         )
         raise ValueError(msg)
 
-    def dumps(self, argument: bool) -> str:  # noqa: D102, FBT001
+    def dumps(self, argument: bool) -> str:  # noqa: FBT001
+        """Dump a boolean into a string.
+
+        By default, this opts to dump as ``"1"`` for ``True`` or ``"0"`` for
+        ``False`` to only use one character's worth of space from the custom id.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
         # NOTE: FBT001: Boolean trap is not relevant here, we're quite
         #               literally just dealing with a boolean.
-        # <<docstring inherited from parser_api.Parser>>
 
         return "1" if argument else "0"
 
