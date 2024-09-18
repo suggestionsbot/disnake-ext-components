@@ -33,6 +33,7 @@ __all__: typing.Sequence[str] = (
 
 _NoneType: typing.Type[None] = type(None)
 _NONES = (None, _NoneType)
+_INT_CHARS = string.digits + string.ascii_lowercase
 
 _NumberT = typing_extensions.TypeVar("_NumberT", bound=float, default=float)
 _CollectionT = typing_extensions.TypeVar(  # Simplest iterable container object.
@@ -159,29 +160,47 @@ class FloatParser(parser_base.Parser[float]):
 
 @parser_base.register_parser_for(int)
 class IntParser(parser_base.Parser[int]):
-    """Specialised number parser for integers.
+    r"""Parser implementation for :class:`int`\s.
 
-    This parser can be either signed or unsigned. The default int parser is
-    signed.
+    Parameters
+    ----------
+    signed:
+        Whether the parser supports signed integers.
+        Defaults to ``True``.
+    base:
+        The base to use to use for storing integers.
+        This is limited to ``2 <= base <= 36``.
+
     """
 
-    type = int
+    signed: bool
+    """Whether the parser supports signed integers."""
+    base: int
+    """The base to use to use for storing integers.
+    This is limited to ``2 <= base <= 36`` as this is the range supported by
+    python's :class:`int` constructor.
 
-    parser_base: int
+    If a greater base is required, a custom integer parser will have to be
+    implemented.
+    """
 
     def __init__(
         self,
         *,
         signed: bool = True,
-        parser_base: int = 10,
+        base: int = 10,
     ):
+        if not 2 <= base <= 36:
+            msg = "Base must be between 2 and 36."
+            raise ValueError(msg)
+
         self.signed = signed
-        self.parser_base = parser_base
+        self.base = base
 
     def loads(self, argument: str) -> int:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
 
-        result = int(argument, self.parser_base)
+        result = int(argument, self.base)
         if not self.signed and result < 0:
             msg = "Unsigned numbers cannot be < 0."
             raise TypeError(msg)
@@ -190,8 +209,25 @@ class IntParser(parser_base.Parser[int]):
 
     def dumps(self, argument: int) -> str:  # noqa: D102
         # <<docstring inherited from parser_api.Parser>>
+        # Try to short-circuit as much as possible
+        if argument < self.base:
+            return str(argument)
+        if self.base == 2:
+            return f"{argument:b}"
+        if self.base == 8:
+            return f"{argument:o}"
+        if self.base == 10:
+            return str(argument)
+        if self.base == 16:
+            return f"{argument:x}"
 
-        return str(argument)
+        # Can't short-circuit, convert to string manually.
+        digits: typing.List[int] = []
+        while argument:
+            digits.append(argument % self.base)
+            argument //= self.base
+
+        return "".join(_INT_CHARS[d] for d in reversed(digits))
 
 
 # BOOL
