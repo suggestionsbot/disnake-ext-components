@@ -749,16 +749,33 @@ class TimeParser(parser_base.Parser[datetime.time]):
 
 @parser_base.register_parser_for(datetime.timedelta)
 class TimedeltaParser(parser_base.Parser[datetime.timedelta]):  # noqa: D101
-    float_parser: FloatParser
+    int_parser: IntParser
+    resolution: typing.Union[int, float]
 
-    def __init__(self, float_parser: typing.Optional[FloatParser] = None):
-        self.float_parser = float_parser or FloatParser.default()
+    def __init__(
+        self,
+        *,
+        resolution: typing.Union[int, float] = Resolution.SECONDS,
+        int_parser: typing.Optional[IntParser] = None,
+    ):
+        if resolution < 1e-6:
+            msg = f"Resolution must be greater than 1e-6, got {resolution}."
+            raise ValueError(msg)
+
+        if resolution < 1 and resolution not in _VALID_BASE_10:
+            # TODO: Verify whether this doesn't false-negative
+            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
+            raise ValueError(msg)
+
+        self.resolution = resolution
+        self.int_parser = int_parser or IntParser.default()
 
     def loads(self, argument: str) -> datetime.timedelta:  # noqa: D102
-        return datetime.timedelta(seconds=self.float_parser.loads(argument))
+        seconds = self.int_parser.loads(argument) * self.resolution
+        return datetime.timedelta(seconds=seconds)
 
     def dumps(self, argument: datetime.timedelta) -> str:  # noqa: D102
-        return self.float_parser.dumps(argument.total_seconds())
+        return self.int_parser.dumps(int(argument.total_seconds() // self.resolution))
 
 
 # NOTE: I assume seconds resolution for timezones is more than enough.
