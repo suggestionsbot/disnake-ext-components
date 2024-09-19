@@ -158,7 +158,7 @@ def _field_transformer(
 @typing_extensions.dataclass_transform(
     kw_only_default=True, field_specifiers=(fields.field, fields.internal)
 )
-class ComponentMeta(type(typing.Protocol)):
+class ComponentMeta(typing._ProtocolMeta):  # pyright: ignore
     """Metaclass for all disnake-ext-components component types.
 
     It is **highly** recommended to use this metaclass for any class that
