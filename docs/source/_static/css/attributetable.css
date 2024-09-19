@@ -27,6 +27,10 @@ body {
   font-size: 16pt;
 }
 
+.py-attribute-table-column span > a {
+  color: var(--color-content-foreground);
+}
+
 main .py-attribute-table-column > ul {
   list-style: none;
   margin: 4px 0px;

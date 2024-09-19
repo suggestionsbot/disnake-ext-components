@@ -39,7 +39,7 @@ class attributetablecolumn(nodes.General, nodes.Element):
     pass
 
 
-class attributetabletitle(nodes.TextElement):
+class attributetabletitle(nodes.Referential, nodes.TextElement):
     pass
 
 
@@ -194,7 +194,7 @@ def process_attributetable(app: Sphinx, doctree: nodes.document, _docname: str) 
             if not subitems:
                 continue
             table.append(
-                class_results_to_node(label, sorted(subitems, key=lambda c: c.label))
+                class_results_to_node(_(label), sorted(subitems, key=lambda c: c.label))
             )
 
         table["python-class"] = fullname
@@ -222,8 +222,8 @@ def get_class_results(
     cls: type = getattr(module, name)
 
     groups: typing.Dict[str, typing.List[TableElement]] = {
-        _("Attributes"): [],
-        _("Methods"): [],
+        "Attributes": [],
+        "Methods": [],
     }
 
     try:
@@ -235,7 +235,7 @@ def get_class_results(
 
     for attr in members:
         attrlookup = f"{fullname}.{attr}"
-        key = _("Attributes")
+        key = "Attributes"
         badge = None
         label = attr
         value = None
@@ -249,29 +249,29 @@ def get_class_results(
         if value is not None:
             doc = value.__doc__ or ""
             if asyncio.iscoroutinefunction(value) or doc.startswith("|coro|"):
-                key = _("Methods")
+                key = "Methods"
                 badge = attributetablebadge("async", "async")
                 badge["badge-type"] = _("coroutine")
             elif isinstance(value, classmethod):
-                key = _("Methods")
+                key = "Methods"
                 badge = attributetablebadge("cls", "cls")
-                badge["badge-type"] = _("classmethod")
+                badge["badge-type"] = "classmethod"
             elif inspect.isfunction(value):
                 if doc.lstrip().startswith(("A decorator", "A shortcut decorator")):
                     # finicky but surprisingly consistent
                     badge = attributetablebadge("@", "@")
                     badge["badge-type"] = _("decorator")
-                    key = _("Methods")
+                    key = "Methods"
                 else:
-                    key = _("Methods")
+                    key = "Methods"
                     badge = attributetablebadge("def", "def")
                     badge["badge-type"] = _("method")
             elif attr in anns and _is_classvar(anns[attr]):
-                key = _("Attributes")
+                key = "Attributes"
                 badge = attributetablebadge("classvar", "classvar")
                 badge["badge-type"] = _("attribute")
         elif attr in anns and _is_classvar(anns[attr]):
-            key = _("Attributes")
+            key = "Attributes"
             badge = attributetablebadge("classvar", "classvar")
             badge["badge-type"] = _("attribute")
 
@@ -283,7 +283,15 @@ def get_class_results(
 def class_results_to_node(
     key: str, elements: typing.List[TableElement]
 ) -> attributetablecolumn:
-    title = attributetabletitle(key, key)
+    titleref = nodes.reference(
+        "",
+        "",
+        nodes.Text(key),
+        internal=True,
+        refuri="#" + key.lower(),
+        anchorname="",
+    )
+    title = attributetabletitle("", "", titleref)
     ul = nodes.bullet_list("")
     ul["classes"].append("py-attribute-table-list")
     for element in elements:
