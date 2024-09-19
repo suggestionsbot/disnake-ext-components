@@ -380,67 +380,180 @@ class StringParser(parser_base.Parser[str]):
 # DATETIME
 
 
-class _Resolution(int, enum.Enum):
-    """The resolution with which datetimes are stored."""
+class Resolution(float, enum.Enum):
+    r"""The resolution with which :class:`datetime.datetime`\s are stored."""
 
     MICROS = 1e-6
+    """Microsecond resolution.
+
+    This is the default for the datetime module, but often more than required.
+    """
+    MILLIS = 1e-3
+    """Millisecond resolution.
+
+    Rounds the datetime **down** to the nearest microsecond.
+    """
     SECONDS = 1
+    """Second resolution.
+
+    Rounds the datetime **down** to the nearest second.
+    """
     MINUTES = 60 * SECONDS
+    """Minute resolution.
+
+    Rounds the datetime **down** to the nearest minute.
+    """
     HOURS = 60 * MINUTES
+    """Hour resolution.
+
+    Rounds the datetime **down** to the nearest hour.
+    """
     DAYS = 24 * HOURS
+    """Day resolution.
+
+    Rounds the datetime **down** to the nearest day.
+    """
+
+
+_VALID_BASE_10 = frozenset([10**i for i in range(-6, 0)])
 
 
 # TODO: Is forcing the use of timezones on users really a parser_based move?
 #       Probably.
 @parser_base.register_parser_for(datetime.datetime)
 class DatetimeParser(parser_base.Parser[datetime.datetime]):
-    """Parser type with support for datetimes.
+    r"""Parser type with support for datetimes.
 
     Parameters
     ----------
     resolution:
-        Dictates in how much detail the datetimes are stored inside strings.
-        For example, a datetime object stored with resolution
-        :attr:`DatetimeParser.res.DAYS` does not contain any information about
-        hours/seconds/milliseconds/microseconds. Defaults to
-        :attr:`DatetimeParser.res.SECONDS`.
+        The resolution with which to store :class:`~datetime.datetime`\s in custom ids.
+        Defaults to :obj:`Resolution.SECONDS`.
     timezone:
-        The timezone to use for parsing. Timezones returned by :meth:`loads`
-        will always be of this timezone, and :meth:`dumps` will only accept
-        datetimes of this timezone. Defaults to :obj:`datetime.timezone.utc`.
+        The timezone to use for parsing.
+        Defaults to :obj:`datetime.timezone.utc`.
+    strict:
+        Whether this parser is in strict mode.
+        Defaults to ``True``.
 
     """
 
-    res = _Resolution
+    resolution: int | float
+    r"""The resolution with which to store :class:`~datetime.datetime`\s in seconds.
+
+    .. warning::
+        The resolution must be greater than ``1e-6``, and if the resolution is
+        smaller than 1, it **must** be a power of 10. If the resolution is
+        greater than 1, it is coerced into an integer.
+
+    .. note::
+        Python datetime objects have microsecond accuracy. For most
+        applications, this is much more precise than necessary.
+        Since custom id space is limited, seconds was chosen as the default.
+    """
+
+    timezone: datetime.timezone
+    """The timezone to use for parsing.
+    Timezones returned by :meth:`loads` will always be of this timezone.
+
+    This is *not* stored in the custom id.
+    """
+
+    strict: bool
+    """Whether the parser is in strict mode.
+
+    If the parser is in strict mode, :meth:`loads` requires the provided
+    datetime object to be of the correct :attr:`timezone`.
+    """
+
+    int_parser: IntParser
+    """The :class:`IntParser` to use internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default datetime parser will also return compressed results.
+    """
 
     def __init__(
         self,
         *,
-        resolution: int = _Resolution.SECONDS,
+        resolution: int | float = Resolution.SECONDS,
         timezone: datetime.timezone = datetime.timezone.utc,
+        strict: bool = True,
+        int_parser: typing.Optional[IntParser] = None,
     ):
+        if resolution < 1e-6:
+            msg = f"Resolution must be greater than 1e-6, got {resolution}."
+            raise ValueError(msg)
+
+        if resolution < 1 and resolution not in _VALID_BASE_10:
+            # TODO: Verify whether this doesn't false-negative
+            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
+            raise ValueError(msg)
+
         self.resolution = resolution
         self.timezone = timezone
+        self.strict = strict
+        self.int_parser = int_parser or IntParser.default()
 
-    def loads(self, argument: str) -> datetime.datetime:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    def loads(self, argument: str) -> datetime.datetime:
+        """Load a datetime from a string.
 
-        return datetime.datetime.fromtimestamp(float(argument), tz=self.timezone)
+        This uses the underlying :attr:`number_parser`.
 
-    def dumps(self, argument: datetime.datetime) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+        The returned datetime is always of the specified :attr:`timezone`.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a datetime.
+
+        """
+        return datetime.datetime.fromtimestamp(
+            self.int_parser.loads(argument) * self.resolution,
+            tz=self.timezone,
+        )
+
+    def dumps(self, argument: datetime.datetime) -> str:
+        """Dump a datetime into a string.
+
+        This uses the underlying :attr:`number_parser`.
+
+        If :attr:`strict` is set to ``True``, this will fail if the provided
+        ``argument`` does not have a timezone set. Otherwise, a timezone-naive
+        datetime will automatically get its timezone set to :attr:`timezone`.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        Raises
+        ------
+        :class:`ValueError`:
+            Either the parser is set to strict and the provided datetime was
+            timezone-naive, or the provided datetime's timezone does not match
+            that of the parser.
+
+        """
+        if self.strict:
+            if not argument.tzinfo:
+                msg = "Strict DatetimeParsers can only load timezone-aware datetimes."
+                raise ValueError(msg)
+        else:
+            argument = argument.replace(tzinfo=self.timezone)
+
         if argument.tzinfo != self.timezone:
             msg = (
                 "Cannot dump the provided datetime object due to a mismatch in"
                 f" timezones. (expected: {self.timezone}, got: {argument.tzinfo})"
             )
-            raise RuntimeError(msg)
+            raise ValueError(msg)
 
         timestamp = argument.timestamp()
-        if self.resolution == _Resolution.MICROS:
-            return str(timestamp)
+        if self.resolution != 0:
+            timestamp //= self.resolution
 
-        return str(int(timestamp // self.resolution) * self.resolution)
+        return self.int_parser.dumps(int(timestamp))
 
 
 @parser_base.register_parser_for(datetime.date)
@@ -466,7 +579,7 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):  # noqa: D101
     float_parser: FloatParser
 
     def __init__(self, float_parser: typing.Optional[FloatParser] = None):
-        self.float_parser = float_parser or FloatParser()
+        self.float_parser = float_parser or FloatParser.default()
 
     def loads(self, argument: str) -> datetime.timedelta:  # noqa: D102
         return datetime.timedelta(seconds=self.float_parser.loads(argument))
