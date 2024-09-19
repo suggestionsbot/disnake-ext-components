@@ -348,15 +348,32 @@ class BoolParser(parser_base.Parser[bool]):
 
 
 @parser_base.register_parser_for(str)
-class StringParser(parser_base.Parser[str]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class StringParser(parser_base.Parser[str]):
+    """Parser type with support for strings.
 
-    def loads(self, argument: str) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    Both loads and dumps are essentially no-ops.
+    """
+
+    def loads(self, argument: str) -> str:
+        """Load a string from a string.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a string.
+
+        """
         return argument
 
-    def dumps(self, argument: str) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    def dumps(self, argument: str) -> str:
+        """Dump a string into a string.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
         return argument
 
 

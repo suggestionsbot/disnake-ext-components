@@ -28,3 +28,8 @@ Classes
 
 .. autoclass:: components.impl.parser.stdlib.BoolParser
     :members:
+
+.. attributetable:: components.impl.parser.stdlib.StringParser
+
+.. autoclass:: components.impl.parser.stdlib.StringParser
+    :members:
