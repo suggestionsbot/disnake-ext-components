@@ -437,6 +437,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
         Defaults to ``True``.
     int_parser:
         The :class:`IntParser` to use internally for this parser.
+
     """
 
     resolution: int | float
@@ -558,12 +559,51 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
 
 
 @parser_base.register_parser_for(datetime.date)
-class DateParser(parser_base.Parser[datetime.date]):  # noqa: D101
-    def loads(self, argument: str) -> datetime.date:  # noqa: D102
-        return datetime.date.fromordinal(int(argument))
+class DateParser(parser_base.Parser[datetime.date]):
+    """Parser type with support for dates.
 
-    def dumps(self, argument: datetime.date) -> str:  # noqa: D102
-        return str(datetime.date.toordinal(argument))
+    Parameters
+    ----------
+    int_parser:
+        The :class:`IntParser` to use internally for this parser.
+
+    """
+
+    int_parser: IntParser
+    """The :class:`IntParser` to use internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default date parser will also return compressed results.
+    """
+
+    def __init__(self, *, int_parser: typing.Optional[IntParser]):
+        self.int_parser = int_parser or IntParser.default()
+
+    def loads(self, argument: str) -> datetime.date:
+        """Load a date from a string.
+
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a date.
+
+        """
+        return datetime.date.fromordinal(self.int_parser.loads(argument))
+
+    def dumps(self, argument: datetime.date) -> str:
+        """Dump a datetime into a string.
+
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
+        return self.int_parser.dumps(datetime.date.toordinal(argument))
 
 
 @parser_base.register_parser_for(datetime.time)
