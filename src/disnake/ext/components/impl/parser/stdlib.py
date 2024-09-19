@@ -830,15 +830,20 @@ class TimeParser(parser_base.Parser[datetime.time]):
         )
 
 
-# NOTE: I assume seconds resolution for timezones is more than enough.
-#       I would honestly assume even minutes are enough, though they
-#       technically support going all the way down to microseconds.
 @parser_base.register_parser_for(datetime.timezone)
 class TimezoneParser(parser_base.Parser[datetime.timezone]):  # noqa: D101
     timedelta_parser: TimedeltaParser
 
-    def __init__(self, timedelta_parser: typing.Optional[TimedeltaParser] = None):
+    def __init__(self, *, timedelta_parser: typing.Optional[TimedeltaParser] = None):
         self.timedelta_parser = timedelta_parser or TimedeltaParser()
+
+    @property
+    def resolution(self) -> typing.Union[int, float]:  # noqa: D102
+        return self.timedelta_parser.resolution
+
+    @resolution.setter
+    def resolution(self, resolution: typing.Union[int, float]) -> None:
+        self.timedelta_parser.resolution = resolution
 
     def loads(self, argument: str) -> datetime.timezone:  # noqa: D102
         return datetime.timezone(self.timedelta_parser.loads(argument))
