@@ -180,6 +180,7 @@ class IntParser(parser_base.Parser[int]):
     base:
         The base to use to use for storing integers.
         This is limited to ``2 <= base <= 36``.
+        Defaults to ``36``.
 
     """
 
@@ -198,7 +199,7 @@ class IntParser(parser_base.Parser[int]):
         self,
         *,
         signed: bool = True,
-        base: int = 10,
+        base: int = 36,
     ):
         if not 2 <= base <= 36:
             msg = "Base must be between 2 and 36."
