@@ -114,6 +114,11 @@ class EnumDocumenter(ClassDocumenterWithExtraSteps):
         60: "MEMBERS",
     }
 
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+        if not self.options.member_order:
+            self.options.member_order = "bysource"  # type: ignore
+
     @classmethod
     def can_document_member(
         cls,
