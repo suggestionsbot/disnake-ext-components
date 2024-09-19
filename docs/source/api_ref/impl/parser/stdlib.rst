@@ -49,3 +49,8 @@ Classes
 
 .. autoclass:: components.impl.parser.stdlib.DateParser
     :members:
+
+.. attributetable:: components.impl.parser.stdlib.TimeParser
+
+.. autoclass:: components.impl.parser.stdlib.TimeParser
+    :members:

@@ -456,7 +456,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
 
     timezone: datetime.timezone
     """The timezone to use for parsing.
-    Timezones returned by :meth:`loads` will always be of this timezone.
+    Datetimes returned by :meth:`loads` will always be of this timezone.
 
     This is *not* stored in the custom id.
     """
@@ -607,12 +607,58 @@ class DateParser(parser_base.Parser[datetime.date]):
 
 
 @parser_base.register_parser_for(datetime.time)
-class TimeParser(parser_base.Parser[datetime.time]):  # noqa: D101
+class TimeParser(parser_base.Parser[datetime.time]):
+    r"""Parser type with support for times.
+
+    Parameters
+    ----------
+    resolution:
+        The resolution with which to store :class:`~datetime.time`\s in custom ids.
+        Defaults to :obj:`Resolution.SECONDS`.
+    timezone:
+        The timezone to use for parsing.
+        Defaults to :obj:`datetime.timezone.utc`.
+    strict:
+        Whether this parser is in strict mode.
+        Defaults to ``True``.
+    int_parser:
+        The :class:`IntParser` to use internally for this parser.
+
+    """
+
+    resolution: int | float
+    r"""The resolution with which to store :class:`~datetime.time`\s in seconds.
+
+    .. warning::
+        The resolution must be greater than ``1e-6``, and if the resolution is
+        smaller than 1, it **must** be a power of 10. If the resolution is
+        greater than 1, it is coerced into an integer.
+
+    .. note::
+        Python time objects have microsecond accuracy. For most
+        applications, this is much more precise than necessary.
+        Since custom id space is limited, seconds was chosen as the default.
+    """
+
     timezone: datetime.timezone
     """The timezone to use for parsing.
-    Timezones returned by :meth:`loads` will always be of this timezone.
+    Times returned by :meth:`loads` will always be of this timezone.
 
     This is *not* stored in the custom id.
+    """
+
+    strict: bool
+    """Whether the parser is in strict mode.
+
+    If the parser is in strict mode, :meth:`loads` requires the provided
+    datetime object to be of the correct :attr:`timezone`.
+    """
+
+    int_parser: IntParser
+    """The :class:`IntParser` to use internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default datetime parser will also return compressed results.
     """
 
     def __init__(
@@ -637,14 +683,46 @@ class TimeParser(parser_base.Parser[datetime.time]):  # noqa: D101
         self.int_parser = int_parser or IntParser.default()
         self.strict = strict
 
-    def loads(self, argument: str) -> datetime.time:  # noqa: D102
+    def loads(self, argument: str) -> datetime.time:
+        """Load a time from a string.
+
+        This uses the underlying :attr:`int_parser`.
+
+        The returned time is always of the specified :attr:`timezone`.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a time.
+
+        """
         seconds = self.int_parser.loads(argument) * self.resolution
         dt = datetime.datetime.min + datetime.timedelta(seconds=seconds)
         assert isinstance(dt, datetime.datetime)
         return dt.time().replace(tzinfo=self.timezone)
-        # return datetime.time(second=argument)
 
-    def dumps(self, argument: datetime.time) -> str:  # noqa: D102
+    def dumps(self, argument: datetime.time) -> str:
+        """Dump a time into a string.
+
+        This uses the underlying :attr:`int_parser`.
+
+        If :attr:`strict` is set to ``True``, this will fail if the provided
+        ``argument`` does not have a timezone set. Otherwise, a timezone-naive
+        time will automatically get its timezone set to :attr:`timezone`.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        Raises
+        ------
+        :class:`ValueError`:
+            Either the parser is set to strict and the provided time was
+            timezone-naive, or the provided time's timezone does not match
+            that of the parser.
+
+        """
         if self.strict:
             if not argument.tzinfo:
                 msg = "Strict TimeParsers can only load timezone-aware times."
