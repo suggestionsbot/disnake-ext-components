@@ -831,24 +831,76 @@ class TimeParser(parser_base.Parser[datetime.time]):
 
 
 @parser_base.register_parser_for(datetime.timezone)
-class TimezoneParser(parser_base.Parser[datetime.timezone]):  # noqa: D101
+class TimezoneParser(parser_base.Parser[datetime.timezone]):
+    r"""Parser type with support for :class:`~datetime.timezone`\s.
+
+    .. important::
+        Unlike :class:`DatetimeParser` etc., resolution for this class is set
+        via the underlying :attr:`timedelta_parser`. Note that this class *does*
+        proxy it through the :attr:`precision` property, which supports both
+        getting and setting.
+
+    Parameters
+    ----------
+    timedelta_parser:
+        The :class:`TimedeltaParser` to use internally for this parser.
+
+    """
+
     timedelta_parser: TimedeltaParser
+    """The :class:`TimedeltaParser` to use internally for this parser.
+
+    Since the default timedelta parser uses base-36 to "compress" numbers, the
+    default datetime parser will also return compressed results.
+    """
 
     def __init__(self, *, timedelta_parser: typing.Optional[TimedeltaParser] = None):
         self.timedelta_parser = timedelta_parser or TimedeltaParser()
 
     @property
-    def resolution(self) -> typing.Union[int, float]:  # noqa: D102
+    def resolution(self) -> typing.Union[int, float]:
+        r"""The resolution with which to store :class:`~datetime.time`\s in seconds.
+
+        .. warning::
+            The resolution must be greater than ``1e-6``, and if the resolution is
+            smaller than 1, it **must** be a power of 10. If the resolution is
+            greater than 1, it is coerced into an integer.
+
+        .. note::
+            Python time objects have microsecond accuracy. For most
+            applications, this is much more precise than necessary.
+            Since custom id space is limited, seconds was chosen as the default.
+        """
         return self.timedelta_parser.resolution
 
     @resolution.setter
     def resolution(self, resolution: typing.Union[int, float]) -> None:
         self.timedelta_parser.resolution = resolution
 
-    def loads(self, argument: str) -> datetime.timezone:  # noqa: D102
+    def loads(self, argument: str) -> datetime.timezone:
+        """Load a timezone from a string.
+
+        This uses the underlying :attr:`timedelta_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a timezone.
+
+        """
         return datetime.timezone(self.timedelta_parser.loads(argument))
 
-    def dumps(self, argument: datetime.timezone) -> str:  # noqa: D102
+    def dumps(self, argument: datetime.timezone) -> str:
+        """Dump a timezone into a string.
+
+        This uses the underlying :attr:`timedelta_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
         return self.timedelta_parser.dumps(argument.utcoffset(None))
 
 
