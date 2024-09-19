@@ -608,11 +608,65 @@ class DateParser(parser_base.Parser[datetime.date]):
 
 @parser_base.register_parser_for(datetime.time)
 class TimeParser(parser_base.Parser[datetime.time]):  # noqa: D101
+    timezone: datetime.timezone
+    """The timezone to use for parsing.
+    Timezones returned by :meth:`loads` will always be of this timezone.
+
+    This is *not* stored in the custom id.
+    """
+
+    def __init__(
+        self,
+        *,
+        resolution: typing.Union[int, float] = Resolution.SECONDS,
+        timezone: datetime.timezone = datetime.timezone.utc,
+        int_parser: typing.Optional[IntParser] = None,
+        strict: bool = True,
+    ):
+        if resolution < 1e-6:
+            msg = f"Resolution must be greater than 1e-6, got {resolution}."
+            raise ValueError(msg)
+
+        if resolution < 1 and resolution not in _VALID_BASE_10:
+            # TODO: Verify whether this doesn't false-negative
+            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
+            raise ValueError(msg)
+
+        self.resolution = resolution
+        self.timezone = timezone
+        self.int_parser = int_parser or IntParser.default()
+        self.strict = strict
+
     def loads(self, argument: str) -> datetime.time:  # noqa: D102
-        return datetime.time.fromisoformat(argument)
+        seconds = self.int_parser.loads(argument) * self.resolution
+        dt = datetime.datetime.min + datetime.timedelta(seconds=seconds)
+        assert isinstance(dt, datetime.datetime)
+        return dt.time().replace(tzinfo=self.timezone)
+        # return datetime.time(second=argument)
 
     def dumps(self, argument: datetime.time) -> str:  # noqa: D102
-        return datetime.time.isoformat(argument)
+        if self.strict:
+            if not argument.tzinfo:
+                msg = "Strict TimeParsers can only load timezone-aware times."
+                raise ValueError(msg)
+        else:
+            argument = argument.replace(tzinfo=self.timezone)
+
+        if argument.tzinfo != self.timezone:
+            msg = (
+                "Cannot dump the provided time object due to a mismatch in"
+                f" timezones. (expected: {self.timezone}, got: {argument.tzinfo})"
+            )
+            raise ValueError(msg)
+
+        seconds = datetime.timedelta(
+            hours=argument.hour,
+            minutes=argument.minute,
+            seconds=argument.second,
+            microseconds=argument.microsecond,
+        ).total_seconds()
+
+        return self.int_parser.dumps(int(seconds // self.resolution))
 
 
 @parser_base.register_parser_for(datetime.timedelta)
