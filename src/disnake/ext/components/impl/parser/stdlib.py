@@ -558,6 +558,93 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
         return self.int_parser.dumps(int(timestamp))
 
 
+@parser_base.register_parser_for(datetime.timedelta)
+class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
+    r"""Parser type with support for :class:`datetime.timedelta`\s.
+
+    Parameters
+    ----------
+    resolution:
+        The resolution with which to store :class:`~datetime.timedelta`\s in custom ids.
+        Defaults to :obj:`Resolution.SECONDS`.
+    timezone:
+        The timezone to use for parsing.
+        Defaults to :obj:`datetime.timezone.utc`.
+    strict:
+        Whether this parser is in strict mode.
+        Defaults to ``True``.
+    int_parser:
+        The :class:`IntParser` to use internally for this parser.
+
+    """
+
+    resolution: typing.Union[int, float]
+    r"""The resolution with which to store :class:`~datetime.timedelta`\s in seconds.
+
+    .. warning::
+        The resolution must be greater than ``1e-6``, and if the resolution is
+        smaller than 1, it **must** be a power of 10. If the resolution is
+        greater than 1, it is coerced into an integer.
+
+    .. note::
+        Python datetime objects have microsecond accuracy. For most
+        applications, this is much more precise than necessary.
+        Since custom id space is limited, seconds was chosen as the default.
+    """
+
+    int_parser: IntParser
+    """The :class:`IntParser` to use internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default datetime parser will also return compressed results.
+    """
+
+    def __init__(
+        self,
+        *,
+        resolution: typing.Union[int, float] = Resolution.SECONDS,
+        int_parser: typing.Optional[IntParser] = None,
+    ):
+        if resolution < 1e-6:
+            msg = f"Resolution must be greater than 1e-6, got {resolution}."
+            raise ValueError(msg)
+
+        if resolution < 1 and resolution not in _VALID_BASE_10:
+            # TODO: Verify whether this doesn't false-negative
+            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
+            raise ValueError(msg)
+
+        self.resolution = resolution
+        self.int_parser = int_parser or IntParser.default()
+
+    def loads(self, argument: str) -> datetime.timedelta:
+        """Load a timedelta from a string.
+
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a timedelta.
+
+        """
+        seconds = self.int_parser.loads(argument) * self.resolution
+        return datetime.timedelta(seconds=seconds)
+
+    def dumps(self, argument: datetime.timedelta) -> str:
+        """Dump a timedelta into a string.
+
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
+        return self.int_parser.dumps(int(argument.total_seconds() // self.resolution))
+
+
 @parser_base.register_parser_for(datetime.date)
 class DateParser(parser_base.Parser[datetime.date]):
     """Parser type with support for dates.
@@ -604,37 +691,6 @@ class DateParser(parser_base.Parser[datetime.date]):
 
         """
         return self.int_parser.dumps(datetime.date.toordinal(argument))
-
-
-@parser_base.register_parser_for(datetime.timedelta)
-class TimedeltaParser(parser_base.Parser[datetime.timedelta]):  # noqa: D101
-    int_parser: IntParser
-    resolution: typing.Union[int, float]
-
-    def __init__(
-        self,
-        *,
-        resolution: typing.Union[int, float] = Resolution.SECONDS,
-        int_parser: typing.Optional[IntParser] = None,
-    ):
-        if resolution < 1e-6:
-            msg = f"Resolution must be greater than 1e-6, got {resolution}."
-            raise ValueError(msg)
-
-        if resolution < 1 and resolution not in _VALID_BASE_10:
-            # TODO: Verify whether this doesn't false-negative
-            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
-            raise ValueError(msg)
-
-        self.resolution = resolution
-        self.int_parser = int_parser or IntParser.default()
-
-    def loads(self, argument: str) -> datetime.timedelta:  # noqa: D102
-        seconds = self.int_parser.loads(argument) * self.resolution
-        return datetime.timedelta(seconds=seconds)
-
-    def dumps(self, argument: datetime.timedelta) -> str:  # noqa: D102
-        return self.int_parser.dumps(int(argument.total_seconds() // self.resolution))
 
 
 @parser_base.register_parser_for(datetime.time)
