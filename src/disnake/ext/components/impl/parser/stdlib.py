@@ -435,7 +435,8 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
     strict:
         Whether this parser is in strict mode.
         Defaults to ``True``.
-
+    int_parser:
+        The :class:`IntParser` to use internally for this parser.
     """
 
     resolution: int | float
@@ -498,7 +499,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
     def loads(self, argument: str) -> datetime.datetime:
         """Load a datetime from a string.
 
-        This uses the underlying :attr:`number_parser`.
+        This uses the underlying :attr:`int_parser`.
 
         The returned datetime is always of the specified :attr:`timezone`.
 
@@ -516,7 +517,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
     def dumps(self, argument: datetime.datetime) -> str:
         """Dump a datetime into a string.
 
-        This uses the underlying :attr:`number_parser`.
+        This uses the underlying :attr:`int_parser`.
 
         If :attr:`strict` is set to ``True``, this will fail if the provided
         ``argument`` does not have a timezone set. Otherwise, a timezone-naive
