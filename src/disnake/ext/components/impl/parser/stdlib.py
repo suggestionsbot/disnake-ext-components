@@ -440,7 +440,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
 
     """
 
-    resolution: int | float
+    resolution: typing.Union[int, float]
     r"""The resolution with which to store :class:`~datetime.datetime`\s in seconds.
 
     .. warning::
@@ -478,7 +478,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
     def __init__(
         self,
         *,
-        resolution: int | float = Resolution.SECONDS,
+        resolution: typing.Union[int, float] = Resolution.SECONDS,
         timezone: datetime.timezone = datetime.timezone.utc,
         strict: bool = True,
         int_parser: typing.Optional[IntParser] = None,
@@ -626,7 +626,7 @@ class TimeParser(parser_base.Parser[datetime.time]):
 
     """
 
-    resolution: int | float
+    resolution: typing.Union[int, float]
     r"""The resolution with which to store :class:`~datetime.time`\s in seconds.
 
     .. warning::

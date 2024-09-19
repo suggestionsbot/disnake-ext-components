@@ -124,7 +124,7 @@ class EnumDocumenter(ClassDocumenterWithExtraSteps):
     ) -> bool:
         return isinstance(member, enum.EnumMeta) and not issubclass(member, enum.Flag)
 
-    def add_content(self, more_content: autodoc.StringList | None) -> None:
+    def add_content(self, more_content: typing.Optional[autodoc.StringList]) -> None:
         super().add_content(more_content)
 
         source_name = self.get_sourcename()

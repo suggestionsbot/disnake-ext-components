@@ -581,7 +581,10 @@ class ComponentManager(component_api.ComponentManager):
     # Identifier and component: function call, return component
     @typing.overload
     def register(
-        self, component_type: typing.Type[ComponentT], *, identifier: str | None = None
+        self,
+        component_type: typing.Type[ComponentT],
+        *,
+        identifier: typing.Optional[str] = None,
     ) -> typing.Type[ComponentT]:
         ...
 
@@ -589,7 +592,7 @@ class ComponentManager(component_api.ComponentManager):
     # returns the component.
     @typing.overload
     def register(
-        self, *, identifier: str | None = None
+        self, *, identifier: typing.Optional[str] = None
     ) -> typing.Callable[[typing.Type[ComponentT]], typing.Type[ComponentT]]:
         ...
 
@@ -949,7 +952,7 @@ class ComponentManager(component_api.ComponentManager):
         identifier: str,
         *,
         as_root: bool = True,
-        placeholder: omit.Omissible[str | None] = omit.Omitted,
+        placeholder: omit.Omissible[typing.Optional[str]] = omit.Omitted,
         min_values: omit.Omissible[int] = omit.Omitted,
         max_values: omit.Omissible[int] = omit.Omitted,
         disabled: omit.Omissible[bool] = omit.Omitted,
