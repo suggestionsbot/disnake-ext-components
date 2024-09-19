@@ -697,11 +697,14 @@ class DateParser(parser_base.Parser[datetime.date]):
 class TimeParser(parser_base.Parser[datetime.time]):
     r"""Parser type with support for times.
 
+    .. important::
+        Unlike :class:`DatetimeParser` etc., resolution for this class is set
+        via the underlying :attr:`timedelta_parser`. Note that this class *does*
+        proxy it through the :attr:`precision` property, which supports both
+        getting and setting.
+
     Parameters
     ----------
-    resolution:
-        The resolution with which to store :class:`~datetime.time`\s in custom ids.
-        Defaults to :obj:`Resolution.SECONDS`.
     timezone:
         The timezone to use for parsing.
         Defaults to :obj:`datetime.timezone.utc`.
@@ -711,20 +714,6 @@ class TimeParser(parser_base.Parser[datetime.time]):
     timedelta_parser:
         The :class:`TimedeltaParser` to use internally for this parser.
 
-    """
-
-    resolution: typing.Union[int, float]
-    r"""The resolution with which to store :class:`~datetime.time`\s in seconds.
-
-    .. warning::
-        The resolution must be greater than ``1e-6``, and if the resolution is
-        smaller than 1, it **must** be a power of 10. If the resolution is
-        greater than 1, it is coerced into an integer.
-
-    .. note::
-        Python time objects have microsecond accuracy. For most
-        applications, this is much more precise than necessary.
-        Since custom id space is limited, seconds was chosen as the default.
     """
 
     timezone: datetime.timezone
@@ -751,24 +740,33 @@ class TimeParser(parser_base.Parser[datetime.time]):
     def __init__(
         self,
         *,
-        resolution: typing.Union[int, float] = Resolution.SECONDS,
         timezone: datetime.timezone = datetime.timezone.utc,
         timedelta_parser: typing.Optional[TimedeltaParser] = None,
         strict: bool = True,
     ):
-        if resolution < 1e-6:
-            msg = f"Resolution must be greater than 1e-6, got {resolution}."
-            raise ValueError(msg)
-
-        if resolution < 1 and resolution not in _VALID_BASE_10:
-            # TODO: Verify whether this doesn't false-negative
-            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
-            raise ValueError(msg)
-
-        self.resolution = resolution
         self.timezone = timezone
         self.timedelta_parser = timedelta_parser or TimedeltaParser.default()
         self.strict = strict
+
+    @property
+    def resolution(self) -> typing.Union[int, float]:
+        r"""The resolution with which to store :class:`~datetime.time`\s in seconds.
+
+        .. warning::
+            The resolution must be greater than ``1e-6``, and if the resolution is
+            smaller than 1, it **must** be a power of 10. If the resolution is
+            greater than 1, it is coerced into an integer.
+
+        .. note::
+            Python time objects have microsecond accuracy. For most
+            applications, this is much more precise than necessary.
+            Since custom id space is limited, seconds was chosen as the default.
+        """
+        return self.timedelta_parser.resolution
+
+    @resolution.setter
+    def resolution(self, resolution: typing.Union[int, float]) -> None:
+        self.timedelta_parser.resolution = resolution
 
     def loads(self, argument: str) -> datetime.time:
         """Load a time from a string.
