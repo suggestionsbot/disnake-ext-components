@@ -606,6 +606,37 @@ class DateParser(parser_base.Parser[datetime.date]):
         return self.int_parser.dumps(datetime.date.toordinal(argument))
 
 
+@parser_base.register_parser_for(datetime.timedelta)
+class TimedeltaParser(parser_base.Parser[datetime.timedelta]):  # noqa: D101
+    int_parser: IntParser
+    resolution: typing.Union[int, float]
+
+    def __init__(
+        self,
+        *,
+        resolution: typing.Union[int, float] = Resolution.SECONDS,
+        int_parser: typing.Optional[IntParser] = None,
+    ):
+        if resolution < 1e-6:
+            msg = f"Resolution must be greater than 1e-6, got {resolution}."
+            raise ValueError(msg)
+
+        if resolution < 1 and resolution not in _VALID_BASE_10:
+            # TODO: Verify whether this doesn't false-negative
+            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
+            raise ValueError(msg)
+
+        self.resolution = resolution
+        self.int_parser = int_parser or IntParser.default()
+
+    def loads(self, argument: str) -> datetime.timedelta:  # noqa: D102
+        seconds = self.int_parser.loads(argument) * self.resolution
+        return datetime.timedelta(seconds=seconds)
+
+    def dumps(self, argument: datetime.timedelta) -> str:  # noqa: D102
+        return self.int_parser.dumps(int(argument.total_seconds() // self.resolution))
+
+
 @parser_base.register_parser_for(datetime.time)
 class TimeParser(parser_base.Parser[datetime.time]):
     r"""Parser type with support for times.
@@ -621,8 +652,8 @@ class TimeParser(parser_base.Parser[datetime.time]):
     strict:
         Whether this parser is in strict mode.
         Defaults to ``True``.
-    int_parser:
-        The :class:`IntParser` to use internally for this parser.
+    timedelta_parser:
+        The :class:`TimedeltaParser` to use internally for this parser.
 
     """
 
@@ -654,10 +685,10 @@ class TimeParser(parser_base.Parser[datetime.time]):
     datetime object to be of the correct :attr:`timezone`.
     """
 
-    int_parser: IntParser
-    """The :class:`IntParser` to use internally for this parser.
+    timedelta_parser: TimedeltaParser
+    """The :class:`TimedeltaParser` to use internally for this parser.
 
-    Since the default integer parser uses base-36 to "compress" numbers, the
+    Since the default timedelta parser uses base-36 to "compress" numbers, the
     default datetime parser will also return compressed results.
     """
 
@@ -666,7 +697,7 @@ class TimeParser(parser_base.Parser[datetime.time]):
         *,
         resolution: typing.Union[int, float] = Resolution.SECONDS,
         timezone: datetime.timezone = datetime.timezone.utc,
-        int_parser: typing.Optional[IntParser] = None,
+        timedelta_parser: typing.Optional[TimedeltaParser] = None,
         strict: bool = True,
     ):
         if resolution < 1e-6:
@@ -680,13 +711,13 @@ class TimeParser(parser_base.Parser[datetime.time]):
 
         self.resolution = resolution
         self.timezone = timezone
-        self.int_parser = int_parser or IntParser.default()
+        self.timedelta_parser = timedelta_parser or TimedeltaParser.default()
         self.strict = strict
 
     def loads(self, argument: str) -> datetime.time:
         """Load a time from a string.
 
-        This uses the underlying :attr:`int_parser`.
+        This uses the underlying :attr:`timedelta_parser`.
 
         The returned time is always of the specified :attr:`timezone`.
 
@@ -696,15 +727,13 @@ class TimeParser(parser_base.Parser[datetime.time]):
             The string that is to be converted into a time.
 
         """
-        seconds = self.int_parser.loads(argument) * self.resolution
-        dt = datetime.datetime.min + datetime.timedelta(seconds=seconds)
-        assert isinstance(dt, datetime.datetime)
+        dt = datetime.datetime.min + self.timedelta_parser.loads(argument)
         return dt.time().replace(tzinfo=self.timezone)
 
     def dumps(self, argument: datetime.time) -> str:
         """Dump a time into a string.
 
-        This uses the underlying :attr:`int_parser`.
+        This uses the underlying :attr:`timedelta_parser`.
 
         If :attr:`strict` is set to ``True``, this will fail if the provided
         ``argument`` does not have a timezone set. Otherwise, a timezone-naive
@@ -737,45 +766,14 @@ class TimeParser(parser_base.Parser[datetime.time]):
             )
             raise ValueError(msg)
 
-        seconds = datetime.timedelta(
-            hours=argument.hour,
-            minutes=argument.minute,
-            seconds=argument.second,
-            microseconds=argument.microsecond,
-        ).total_seconds()
-
-        return self.int_parser.dumps(int(seconds // self.resolution))
-
-
-@parser_base.register_parser_for(datetime.timedelta)
-class TimedeltaParser(parser_base.Parser[datetime.timedelta]):  # noqa: D101
-    int_parser: IntParser
-    resolution: typing.Union[int, float]
-
-    def __init__(
-        self,
-        *,
-        resolution: typing.Union[int, float] = Resolution.SECONDS,
-        int_parser: typing.Optional[IntParser] = None,
-    ):
-        if resolution < 1e-6:
-            msg = f"Resolution must be greater than 1e-6, got {resolution}."
-            raise ValueError(msg)
-
-        if resolution < 1 and resolution not in _VALID_BASE_10:
-            # TODO: Verify whether this doesn't false-negative
-            msg = f"Resolutions smaller than 1 must be a power of 10, got {resolution}."
-            raise ValueError(msg)
-
-        self.resolution = resolution
-        self.int_parser = int_parser or IntParser.default()
-
-    def loads(self, argument: str) -> datetime.timedelta:  # noqa: D102
-        seconds = self.int_parser.loads(argument) * self.resolution
-        return datetime.timedelta(seconds=seconds)
-
-    def dumps(self, argument: datetime.timedelta) -> str:  # noqa: D102
-        return self.int_parser.dumps(int(argument.total_seconds() // self.resolution))
+        return self.timedelta_parser.dumps(
+            datetime.timedelta(
+                hours=argument.hour,
+                minutes=argument.minute,
+                seconds=argument.second,
+                microseconds=argument.microsecond,
+            )
+        )
 
 
 # NOTE: I assume seconds resolution for timezones is more than enough.
