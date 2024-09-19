@@ -194,7 +194,11 @@ def process_attributetable(app: Sphinx, doctree: nodes.document, _docname: str) 
             if not subitems:
                 continue
             table.append(
-                class_results_to_node(_(label), sorted(subitems, key=lambda c: c.label))
+                class_results_to_node(
+                    _(label),
+                    sorted(subitems, key=lambda c: c.label),
+                    fullname,
+                )
             )
 
         table["python-class"] = fullname
@@ -281,14 +285,16 @@ def get_class_results(
 
 
 def class_results_to_node(
-    key: str, elements: typing.List[TableElement]
+    key: str,
+    elements: typing.List[TableElement],
+    fullname: str,
 ) -> attributetablecolumn:
     titleref = nodes.reference(
         "",
         "",
         nodes.Text(key),
         internal=True,
-        refuri="#" + key.lower(),
+        refuri=f"#{fullname.replace('.', '-')}-{key}".lower(),
         anchorname="",
     )
     title = attributetabletitle("", "", titleref)

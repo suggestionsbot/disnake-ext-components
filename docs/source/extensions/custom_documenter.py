@@ -88,6 +88,8 @@ class ClassDocumenterWithExtraSteps(autodoc.ClassDocumenter):
                 # TODO: Maybe figure out how to actually render this as some
                 #       small title thing.
                 underline = "^" * len(category)
+                self.add_line(f".. _{self.name}-{category}:", source_name)
+                self.add_line("", source_name)
                 self.add_line(category, source_name)
                 self.add_line(underline, source_name)
                 self.add_line("", source_name)
