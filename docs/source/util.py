@@ -14,7 +14,7 @@ __all__ = (
     "get_module_path",
     "make_linkcode_resolver",
     "format_annotation",
-    "apply_patch",
+    "apply_autodoc_typehints_patch",
 )
 
 
@@ -61,21 +61,6 @@ def make_linkcode_resolver(
         return f"{repo_url}/blob/{git_ref}/src/disnake/ext/components/{path}"
 
     return linkcode_resolve
-
-
-def make_generic(cls: type) -> None:
-    """Hacky way to get around runtime inconsistencies in typehinting.
-
-    e.g. attrs.Attribute is generic during type-checking, but not generic at runtime.
-    If the passed class is already generic, it is returned as-is.
-    """
-    if hasattr(cls, "__class_getitem__"):
-        return
-
-    def __class_getitem__(params: ...) -> ...:
-        return typing._GenericAlias(cls, params)  # pyright: ignore
-
-    cls.__class_getitem__ = __class_getitem__  # pyright: ignore
 
 
 def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
@@ -195,6 +180,6 @@ def format_annotation(  # noqa: PLR0911, PLR0912, PLR0915
     return f":py:{role}:`{prefix}{full_name}`{escape}{formatted_args}"
 
 
-def apply_patch() -> None:
+def apply_autodoc_typehints_patch() -> None:
     """Apply the sphinx-ext-autodoc monkeypatch."""
     original.format_annotation = format_annotation

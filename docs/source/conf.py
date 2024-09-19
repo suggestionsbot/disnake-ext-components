@@ -56,9 +56,9 @@ extensions = [
     "sphinx_copybutton",
     "hoverxref.extension",
     "sphinx_autodoc_typehints",
-    "enum_tools.autoenum",
     # Custom.
     "attributetable",
+    "custom_documenter",
 ]
 exclude_patterns = []
 
@@ -89,7 +89,11 @@ html_theme_options = {
 html_show_sourcelink = False
 
 html_static_path = ["_static"]
-html_css_files = ["./css/custom.css", "./css/attributetable.css"]
+html_css_files = [
+    "./css/custom.css",
+    "./css/attributetable.css",
+    "./css/custom_documenter.css",
+]
 html_js_files = ["./js/custom.js"]
 
 # -- Intersphinx config -------------------------------------------------------
@@ -152,7 +156,7 @@ extlinks = {
 # -- sphinx-autodoc-typehints config ------------------------------------------
 
 # Apply monkeypatch.
-util.apply_patch()
+util.apply_autodoc_typehints_patch()
 
 typehints_document_rtype = False
 typehints_use_rtype = False

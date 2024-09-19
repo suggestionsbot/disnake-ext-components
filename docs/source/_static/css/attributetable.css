@@ -21,10 +21,10 @@ body {
 }
 
 .py-attribute-table-column > span {
-  font-weight: bold;
   color: var(--attribute-table-title);
   text-transform: uppercase;
   font-weight: 500;
+  font-size: 16pt;
 }
 
 main .py-attribute-table-column > ul {
