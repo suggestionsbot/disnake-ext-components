@@ -14,6 +14,7 @@ __all__: typing.Sequence[str] = (
     "register_parser",
     "get_parser",
     "Parser",
+    "SourcedParser",
 )
 
 _T = typing.TypeVar("_T")
@@ -256,7 +257,7 @@ class SourcedParser(
 
     is_sourced: typing.ClassVar[typing.Literal[True]] = True
 
-    def loads(
+    def loads(  # noqa: D102
         self,
         argument: typing.Any,  # noqa: ANN401
         /,
