@@ -457,7 +457,7 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
         source:
             The source to use for parsing.
 
-            If any of the inner parsers need it, this is automatically
+            If any of the inner parsers are sourced, this is automatically
             passed to them.
 
         Raises
@@ -513,30 +513,59 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
 
 @parser_base.register_parser_for(typing.Collection)
 class CollectionParser(parser_base.SourcedParser[_CollectionT]):
-    """Parser type with support for collections of other types.
+    r"""Parser type with support for :class:`typing.Collection`\s.
 
-    This parser parses a string into a given container type and inner type, and
-    vice versa.
+    This supports types such as :class:`list`, :class:`set`, etc.; but also
+    abstract types such as :class:`typing.Collection` itself.
 
-    Note that this parser does not support tuples.
+    .. note:: This parser does **not** support :class:`tuple`\s.
 
     Parameters
     ----------
-    inner_parser: components.Parser[object]
-        The parser to use to parse the items inside the collection. This defines
-        the inner type for the collection. Sadly, due to typing restrictions,
-        this is not enforced during type-checking. Defaults to a string parser.
-    collection_type: Collection[object]
+    inner_parser:
+        The parser to use to parse the items inside the collection.
+
+        This defines the inner type for the collection.
+
+        Defaults to a :class:`StringParser`.
+    collection_type:
         The type of collection to use. This does not specify the inner type.
-    sep: str
-        The separator to use. Can be any string, though a single character is
-        recommended. Defaults to ",".
+
+        Defaults to :class:`list`.
+    sep:
+        The separator to use.
+
+        Can be any string, though a single character is recommended.
+
+        Defaults to ``","``.
 
     """
 
-    inner_parser: parser_base.Parser[typing.Any]
+    inner_parser: parser_base.AnyParser
+    """The parser to use to parse the items inside the collection.
+
+    Note that, unlike a :class:`TupleParser`, a collection parser requires all
+    items to be of the same type.
+    """
     collection_type: typing.Type[_CollectionT]
+    """The collection type for this parser.
+
+    This is the type that holds the items, e.g. a :class:`list`.
+
+    .. note::
+        This has to support being instantiated from an iterable as
+        ``collection_type(iterable_of_values)``; e.g. ``set([1,2,3])``
+    """
     sep: str
+    """The separator to use.
+
+    Can be any string, though a single character is recommended.
+
+    .. warning::
+        Ensure that this does **not** match
+        :attr:`ComponentManager.sep <components.impl.manager.ComponentManager.sep>`
+        on the component manager that corresponds to this parser's component.
+        """
 
     def __init__(
         self,
@@ -554,13 +583,28 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
             StringParser.default() if inner_parser is None else inner_parser
         )
 
-    async def loads(  # noqa: D102
+    async def loads(
         self,
         argument: str,
         *,
         source: disnake.Interaction,
     ) -> _CollectionT:
-        # <<docstring inherited from parser_api.Parser>>
+        """Load a collection from a string.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a collection.
+
+            This is split over :attr:`sep` and then each individual substring
+            is passed to its respective inner parser.
+        source:
+            The source to use for parsing.
+
+            If the inner parser is sourced, this is automatically passed to it.
+
+        """
+        # TODO: Maybe make this a generator instead of a list?
         parsed = [
             await parser_base.try_loads(self.inner_parser, part, source=source)
             for part in argument.split(self.sep)
@@ -569,13 +613,18 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
 
         return self.collection_type(parsed)  # pyright: ignore[reportCallIssue]
 
-    async def dumps(self, argument: _CollectionT) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    async def dumps(self, argument: _CollectionT) -> str:
+        """Dump a tuple into a collection.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
         return ",".join(
             [
-                await aio.eval_maybe_coro(  # Weird false flag in pyright...
-                    self.inner_parser.dumps(part),  # pyright: ignore
-                )
+                await aio.eval_maybe_coro(self.inner_parser.dumps(part))
                 for part in argument
             ]
         )
