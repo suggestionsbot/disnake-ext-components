@@ -78,14 +78,10 @@ def _get_source(
 # GET_ONLY
 
 
-class GetChannelParserBase(
-    parser_base.SourcedParser[_ChannelT],
-    # typing.Protocol[_ChannelT],
-):
+# NOTE: Making these protocols messes with documentation of all subclasses'
+#       __init__ methods.
+class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     r"""Base class for synchronous parser types with support for channels.
-
-    .. note::
-        This class cannot be instantiated as it is a :class:`typing.Protocol`.
 
     Parameters
     ----------
@@ -105,6 +101,13 @@ class GetChannelParserBase(
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
+        if type(self) is GetChannelParserBase:
+            msg = (
+                "'GetChannelParserBase' is a base class and should not be"
+                " instantiated directly."
+            )
+            raise TypeError(msg)
+
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
     def loads(
@@ -171,10 +174,7 @@ class GetChannelParserBase(
 # GET AND FETCH
 
 
-class ChannelParserBase(
-    parser_base.SourcedParser[_ChannelT],
-    typing.Protocol[_ChannelT],
-):
+class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     r"""Base class for asynchronous parser types with support for channels.
 
     .. warning::
@@ -201,6 +201,13 @@ class ChannelParserBase(
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
+        if type(self) is ChannelParserBase:
+            msg = (
+                "'ChannelParserBase' is a base class and should not be"
+                " instantiated directly."
+            )
+            raise TypeError(msg)
+
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
     async def loads(self, argument: str, *, source: helpers.BotAware) -> _ChannelT:
