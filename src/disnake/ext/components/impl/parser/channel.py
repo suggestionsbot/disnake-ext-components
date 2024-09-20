@@ -451,14 +451,38 @@ class GetCategoryParser(GetChannelParserBase[disnake.CategoryChannel]):
 
 
 @parser_base.register_parser_for(disnake.abc.GuildChannel)
-class GuildChannelParser(ChannelParserBase[disnake.abc.GuildChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GuildChannelParser(ChannelParserBase[disnake.abc.GuildChannel]):
+    r"""Asynchronous parser type with support for guild channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.abc.GuildChannel
 
 
 @parser_base.register_parser_for(disnake.abc.PrivateChannel)
-class PrivateChannelParser(ChannelParserBase[disnake.abc.PrivateChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class PrivateChannelParser(ChannelParserBase[disnake.abc.PrivateChannel]):
+    r"""Asynchronous parser type with support for private channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.abc.PrivateChannel  # pyright: ignore[reportAssignmentType]
 
 
@@ -466,14 +490,38 @@ class PrivateChannelParser(ChannelParserBase[disnake.abc.PrivateChannel]):  # no
 
 
 @parser_base.register_parser_for(disnake.DMChannel)
-class DMChannelParser(ChannelParserBase[disnake.DMChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class DMChannelParser(ChannelParserBase[disnake.DMChannel]):
+    r"""Asynchronous parser type with support for DM channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.DMChannel
 
 
 @parser_base.register_parser_for(disnake.GroupChannel)
-class GroupChannelParser(ChannelParserBase[disnake.GroupChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GroupChannelParser(ChannelParserBase[disnake.GroupChannel]):
+    r"""Asynchronous parser type with support for group channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.GroupChannel
 
 
@@ -481,44 +529,128 @@ class GroupChannelParser(ChannelParserBase[disnake.GroupChannel]):  # noqa: D101
 
 
 @parser_base.register_parser_for(disnake.ForumChannel)
-class ForumChannelParser(ChannelParserBase[disnake.ForumChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class ForumChannelParser(ChannelParserBase[disnake.ForumChannel]):
+    r"""Asynchronous parser type with support for forum channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.ForumChannel
 
 
 @parser_base.register_parser_for(disnake.NewsChannel)
-class NewsChannelParser(ChannelParserBase[disnake.NewsChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class NewsChannelParser(ChannelParserBase[disnake.NewsChannel]):
+    r"""Asynchronous parser type with support for news channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.NewsChannel
 
 
 @parser_base.register_parser_for(disnake.VoiceChannel)
-class VoiceChannelParser(ChannelParserBase[disnake.VoiceChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class VoiceChannelParser(ChannelParserBase[disnake.VoiceChannel]):
+    r"""Asynchronous parser type with support for voice channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.VoiceChannel
 
 
 @parser_base.register_parser_for(disnake.StageChannel)
-class StageChannelParser(ChannelParserBase[disnake.StageChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class StageChannelParser(ChannelParserBase[disnake.StageChannel]):
+    r"""Asynchronous parser type with support for stage channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.StageChannel
 
 
 @parser_base.register_parser_for(disnake.TextChannel)
-class TextChannelParser(ChannelParserBase[disnake.TextChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class TextChannelParser(ChannelParserBase[disnake.TextChannel]):
+    r"""Asynchronous parser type with support for text channels.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.TextChannel
 
 
 @parser_base.register_parser_for(disnake.Thread)
-class ThreadParser(ChannelParserBase[disnake.Thread]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class ThreadParser(ChannelParserBase[disnake.Thread]):
+    r"""Asynchronous parser type with support for threads.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.Thread
 
 
 @parser_base.register_parser_for(disnake.CategoryChannel)
-class CategoryParser(ChannelParserBase[disnake.CategoryChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class CategoryParser(ChannelParserBase[disnake.CategoryChannel]):
+    r"""Asynchronous parser type with support for categories.
+
+    .. warning::
+        This parser can make API requests.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.CategoryChannel
 
 
