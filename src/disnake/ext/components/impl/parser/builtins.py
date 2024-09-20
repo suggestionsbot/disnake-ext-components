@@ -649,7 +649,7 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
     optional: bool
 
     def __init__(
-        self, *inner_parsers: typing.Optional[parser_base.Parser[typing.Any]]
+        self, *inner_parsers: typing.Optional[parser_base.AnyParser]
     ) -> None:
         if len(inner_parsers) < 2:
             msg = "A Union requires two or more type arguments."
@@ -659,14 +659,42 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
         self.inner_parsers = []
         for parser in inner_parsers:
             if parser in _NONES:
-                self.inner_parsers.append(NoneParser.default())
                 self.optional = True
 
             else:
                 self.inner_parsers.append(parser)
 
+        # Ensure the NoneParser always comes last.
+        if self.optional:
+            self.inner_parsers.append(NoneParser.default())
+
+    @property
+    def strict(self) -> bool:
+        """Whether this parser is strict.
+
+        This is only meaningful when the parser is optional, in which case it
+        directly reflects :attr:`NoneParser.strict`.
+        """
+        if not self.optional:
+            return True
+
+        none_parser = self.inner_parsers[-1]
+        assert isinstance(none_parser, NoneParser)
+        return none_parser.strict
+
+    @strict.setter
+    def strict(self, strict: bool) -> None:
+        if not self.optional:
+            cls = type(self).__name__
+            msg = f"{cls}.strict can only be set when {cls}.optional is True."
+            raise RuntimeError(msg)
+
+        none_parser = self.inner_parsers[-1]
+        assert isinstance(none_parser, NoneParser)
+        none_parser.strict = strict
+
     async def loads(  # noqa: D102
-        self, argument: str, *, source: disnake.Interaction
+        self, argument: str, *, source: object
     ) -> _T:
         # <<docstring inherited from parser_api.Parser>>
         if not argument and self.optional:
@@ -687,6 +715,7 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
         if not argument and self.optional:
             return ""
 
+        # TODO: Maybe add contextlib.suppress?
         for parser in self.inner_parsers:
             if isinstance(argument, parser.default_types()):
                 return await aio.eval_maybe_coro(parser.dumps(argument))
