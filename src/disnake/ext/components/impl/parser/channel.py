@@ -78,11 +78,31 @@ def _get_source(
 # GET_ONLY
 
 
-class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
-    # <<docstring inherited from parser_api.Parser>>
+class GetChannelParserBase(
+    parser_base.SourcedParser[_ChannelT],
+    typing.Protocol[_ChannelT],
+):
+    r"""Base class for synchronous parser types with support for channels.
 
-    parser_type: typing.Type[_ChannelT]
+    .. note::
+        This class cannot be instantiated as it is a :class:`typing.Protocol`.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
+    parser_type: typing.Type[_ChannelT]  # NOTE: Intentionally undocumented.
     int_parser: builtins_parsers.IntParser
+    """The :class:`~components.impl.parser.builtins.IntParser` to use
+    internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default channel parser will also return compressed results.
+    """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
@@ -95,8 +115,30 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
             helpers.GuildAware, helpers.BotAware, helpers.MessageAware
         ],
     ) -> _ChannelT:
-        # <<docstring inherited from parser_api.Parser>>
+        """Load a channel from a string.
 
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be loaded into a channel.
+
+            This always matches the channel type of the parser.
+        source:
+            The source to use for parsing.
+
+            Must be a type that has access to a `get_channel` method.
+
+        Raises
+        ------
+        :class:`LookupError`:
+            A channel with the id stored in the ``argument`` could not be found.
+        :class:`TypeError`:
+            A channel with the id stored in the ``argument`` was found, but it
+            was of an incorrect channel type.
+
+        """
         channel_id = self.int_parser.loads(argument)
         channel = _get_source(source).get_channel(channel_id)
 
@@ -113,26 +155,89 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         return channel
 
     def dumps(self, argument: _ChannelT) -> str:
-        # <<docstring inherited from parser_api.Parser>>
+        """Dump a channel into a string.
 
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a snowflake.
+
+        """
         return self.int_parser.dumps(argument.id)
 
 
 # GET AND FETCH
 
 
-class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
-    # <<docstring inherited from parser_api.Parser>>
+class ChannelParserBase(
+    parser_base.SourcedParser[_ChannelT],
+    typing.Protocol[_ChannelT],
+):
+    r"""Base class for asynchronous parser types with support for channels.
 
-    parser_type: typing.Type[_ChannelT]
+    .. warning::
+        This parser can make API requests.
+
+    .. note::
+        This class cannot be instantiated as it is a :class:`typing.Protocol`.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
+    parser_type: typing.Type[_ChannelT]  # NOTE: Intentionally undocumented.
     int_parser: builtins_parsers.IntParser
+    """The :class:`~components.impl.parser.builtins.IntParser` to use
+    internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default channel parser will also return compressed results.
+    """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
-    async def loads(self, argument: str, *, source: disnake.Interaction) -> _ChannelT:
-        # <<docstring inherited from parser_api.Parser>>
+    async def loads(self, argument: str, *, source: helpers.BotAware) -> _ChannelT:
+        """Asynchronously load a channel from a string.
 
+        This uses the underlying :attr:`int_parser`.
+
+        This method first tries to get the channel from cache. If this fails,
+        it will try to fetch the channel instead.
+
+        .. warning::
+            This method can make API requests.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be loaded into a channel.
+
+            This always matches the channel type of the parser.
+        source:
+            The source to use for parsing.
+
+            Must be a type that has access to a :class:`bot <commands.Bot>`
+            attribute.
+
+        Raises
+        ------
+        :class:`disnake.NotFound`:
+            A channel with the id stored in the ``argument`` could not be found.
+        :class:`TypeError`:
+            A channel with the id stored in the ``argument`` was found, but it
+            was of an incorrect channel type.
+        ...
+            Any other error raised by
+            :meth:`Bot.fetch_channel() <disnake.ext.commands.Bot.fetch_channel>`.
+
+        """
         channel_id = self.int_parser.loads(argument)
         channel = (
             source.bot.get_channel(channel_id)
@@ -148,8 +253,16 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         return channel
 
     def dumps(self, argument: _ChannelT) -> str:
-        # <<docstring inherited from parser_api.Parser>>
+        """Dump a channel into a string.
 
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a snowflake.
+
+        """
         return self.int_parser.dumps(argument.id)
 
 
