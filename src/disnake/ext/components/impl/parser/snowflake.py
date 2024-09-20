@@ -19,15 +19,19 @@ def snowflake_dumps(argument: disnake.abc.Snowflake) -> str:
 
 
 @parser_base.register_parser_for(disnake.abc.Snowflake, disnake.Object)
-class SnowflakeParser(parser_base.Parser[disnake.Object]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class SnowflakeParser(parser_base.Parser[disnake.abc.Snowflake]):
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.dumps = snowflake_dumps
+    def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
+        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+
+    def loads(self, argument: str) -> disnake.Object:
+
+        return disnake.Object(self.int_parser.loads(argument))
+
+    def dumps(self, argument: disnake.abc.Snowflake) -> str:
 
     def loads(self, argument: str) -> disnake.Object:  # noqa: D102
-        return disnake.Object(int(argument))
+        return self.int_parser.dumps(argument.id)
 
 
 ObjectParser = SnowflakeParser  # TODO: Remove.
