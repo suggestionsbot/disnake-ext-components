@@ -399,7 +399,7 @@ def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_Collec
 
 @parser_base.register_parser_for(tuple)
 class TupleParser(parser_base.SourcedParser[_TupleT]):
-    """Parser type with support for tuples.
+    r"""Parser type with support for :class:`tuple`\s.
 
     The benefit of a tuple parser is fixed-length checks and the ability to set
     multiple types. For example, a ``Tuple[str, int, bool]`` parser will
@@ -408,35 +408,69 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
     Parameters
     ----------
     *inner_parsers: components.Parser[object]
-        The parsers to use to parse the items inside the tuple. These define
-        the inner types and the allowed number of items in the in the tuple.
+        The parsers to use to parse the items inside the tuple.
 
         Defaults to a single string parser, i.e. a one-element tuple containing
         exactly one string.
     sep: str
-        The separator to use. Can be any string, though a single character is
-        recommended. Defaults to ",".
+        The separator to use.
+
+        Defaults to ",".
 
     """
 
     inner_parsers: typing.Tuple[parser_base.AnyParser, ...]
+    """The parsers to use to parse the items inside the tuple.
+
+    These define the inner types and the allowed number of items in the in the
+    tuple.
+    """
     sep: str
+    """The separator to use.
+
+    Can be any string, though a single character is recommended.
+
+    .. warning::
+        Ensure that this does **not** match
+        :attr:`ComponentManager.sep <components.impl.manager.ComponentManager.sep>`
+        on the component manager that corresponds to this parser's component.
+        """
 
     def __init__(
         self,
         *inner_parsers: parser_base.AnyParser,
         sep: str = ",",
     ) -> None:
-        self.inner_parsers = inner_parsers
+        self.inner_parsers = inner_parsers or (StringParser.default(),)
         self.sep = sep
 
-    async def loads(  # noqa: D102
-        self, argument: str, *, source: disnake.Interaction
-    ) -> _TupleT:
-        # <<docstring inherited from parser_api.Parser>>
+    async def loads(self, argument: str, *, source: object) -> _TupleT:
+        """Load a tuple from a string.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into a tuple.
+
+            This is split over :attr:`sep` and then each individual substring
+            is passed to its respective inner parser.
+        source:
+            The source to use for parsing.
+
+            If any of the inner parsers need it, this is automatically
+            passed to them.
+
+        Raises
+        ------
+        RuntimeError:
+            The number of substrings after splitting does not match the number
+            of inner parsers.
+
+        """
         parts = argument.split(self.sep)
 
         if len(parts) != len(self.inner_parsers):
+            # TODO: Custom exception
             msg = f"Expected {len(self.inner_parsers)} arguments, got {len(parts)}."
             raise RuntimeError(msg)
 
@@ -450,8 +484,21 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
             ),
         )
 
-    async def dumps(self, argument: _TupleT) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    async def dumps(self, argument: _TupleT) -> str:
+        """Dump a tuple into a string.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        Raises
+        ------
+        :class:`RuntimeError`:
+            The length of the ``argument`` tuple does not match the number of
+            inner parsers.
+
+        """
         if len(argument) != len(self.inner_parsers):
             msg = f"Expected {len(self.inner_parsers)} arguments, got {len(argument)}."
             raise RuntimeError(msg)

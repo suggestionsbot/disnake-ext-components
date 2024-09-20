@@ -33,3 +33,8 @@ Classes
 
 .. autoclass:: components.impl.parser.builtins.StringParser
     :members:
+
+.. attributetable:: components.impl.parser.builtins.TupleParser
+
+.. autoclass:: components.impl.parser.builtins.TupleParser
+    :members:
