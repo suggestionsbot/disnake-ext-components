@@ -6,10 +6,13 @@ import typing
 
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
+from typing_extensions import deprecated
 
 __all__: typing.Sequence[str] = ("SnowflakeParser",)
 
 
+# TODO: Remove
+@deprecated("replace all usage pls")
 def snowflake_dumps(argument: disnake.abc.Snowflake) -> str:
     """Dump any kind of :class:`disnake.abc.Snowflake` to a string."""
     return str(argument.id)
