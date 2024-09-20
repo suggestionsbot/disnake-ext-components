@@ -632,25 +632,33 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
 
 @parser_base.register_parser_for(typing.Union)  # pyright: ignore[reportArgumentType]
 class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
-    """Parser type with support for unions.
+    r"""Parser type with support for :class:`~typing.Union`\s.
 
-    Provided parsers are sequentially tried until one passes. If none work, an
-    exception is raised instead.
+    The provided parsers are sequentially tried until one passes. If none work,
+    an exception is raised instead.
+
+    .. important::
+        Unlike :class:`NoneParser`, :attr:`strict` for this class is set
+        via the underlying none parser, if any. Note that this class *does*
+        proxy it through the :attr:`strict` property, which supports both
+        getting and setting; but **only** if this parser is :attr:`optional`.
 
     Parameters
     ----------
-    *inner_parsers: Optional[components.Parser[object]]
+    *inner_parsers:
         The parsers with which to sequentially try to parse the argument.
-        None can be provided as one of the parameters to make it optional.
+
+        ``None`` can be provided as one of the parameters to make it optional;
+        this will automatically add a **strict** :class:`NoneParser`.
 
     """
 
-    inner_parsers: typing.Sequence[parser_base.Parser[typing.Any]]
+    inner_parsers: typing.Sequence[parser_base.AnyParser]
+    """The parsers with which to sequentially try to parse the argument."""
     optional: bool
+    """Whether this parser is optional."""
 
-    def __init__(
-        self, *inner_parsers: typing.Optional[parser_base.AnyParser]
-    ) -> None:
+    def __init__(self, *inner_parsers: typing.Optional[parser_base.AnyParser]) -> None:
         if len(inner_parsers) < 2:
             msg = "A Union requires two or more type arguments."
             raise TypeError(msg)
@@ -693,10 +701,31 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
         assert isinstance(none_parser, NoneParser)
         none_parser.strict = strict
 
-    async def loads(  # noqa: D102
-        self, argument: str, *, source: object
-    ) -> _T:
-        # <<docstring inherited from parser_api.Parser>>
+    async def loads(self, argument: str, *, source: object) -> _T:
+        """Load a union of types from a string.
+
+        If :attr:`optional` is ``True`` and :attr:`strict` is ``False``, this
+        returns ``None`` if all parsers fail. Otherwise, an exception is raised.
+
+        Parameters
+        ----------
+        argument:
+            The string that is to be converted into one of the types in this union.
+
+            Each inner parser is tried in the order they are provided, and the
+            first to load the ``argument`` successfully short-circuits and
+            returns.
+        source:
+            The source to use for parsing.
+
+            If the inner parser is sourced, this is automatically passed to it.
+
+        Raises
+        ------
+        :class:`RuntimeError`
+            None of the :attr:`inner_parsers` succeeded to load the ``argument``.
+
+        """
         if not argument and self.optional:
             # Quick-return: if no argument was provided and the parser is
             # optional, just return None without trying any parsers.
@@ -710,8 +739,23 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
         msg = "Failed to parse input to any type in the Union."
         raise RuntimeError(msg)
 
-    async def dumps(self, argument: _T) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    async def dumps(self, argument: _T) -> str:
+        """Dump a union of types into a string.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+            This finds a parser that is registered for the type of the provided
+            ``argument``.
+
+        Raises
+        ------
+        :class:`RuntimeError`:
+            None of the :attr:`inner_parsers` succeeded to dump the ``argument``.
+
+        """
         if not argument and self.optional:
             return ""
 
@@ -719,6 +763,10 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
         for parser in self.inner_parsers:
             if isinstance(argument, parser.default_types()):
                 return await aio.eval_maybe_coro(parser.dumps(argument))
+
+        if self.optional and not self.strict:
+            # Act like the NoneParser with strict=False dumped the argument.
+            return ""
 
         msg = f"Failed to parse input {argument!r} to any type in the Union."
         raise RuntimeError(msg)

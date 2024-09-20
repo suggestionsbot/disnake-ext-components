@@ -43,3 +43,8 @@ Classes
 
 .. autoclass:: components.impl.parser.builtins.CollectionParser
     :members:
+
+.. attributetable:: components.impl.parser.builtins.UnionParser
+
+.. autoclass:: components.impl.parser.builtins.UnionParser
+    :members:
