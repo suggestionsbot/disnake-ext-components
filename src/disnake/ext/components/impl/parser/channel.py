@@ -80,7 +80,7 @@ def _get_source(
 
 class GetChannelParserBase(
     parser_base.SourcedParser[_ChannelT],
-    typing.Protocol[_ChannelT],
+    # typing.Protocol[_ChannelT],
 ):
     r"""Base class for synchronous parser types with support for channels.
 
@@ -270,14 +270,32 @@ class ChannelParserBase(
 
 
 @parser_base.register_parser_for(disnake.abc.GuildChannel)
-class GetGuildChannelParser(GetChannelParserBase[disnake.abc.GuildChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetGuildChannelParser(GetChannelParserBase[disnake.abc.GuildChannel]):
+    r"""Synchronous parser type with support for guild channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.abc.GuildChannel
 
 
 @parser_base.register_parser_for(disnake.abc.PrivateChannel)
-class GetPrivateChannelParser(GetChannelParserBase[disnake.abc.PrivateChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetPrivateChannelParser(GetChannelParserBase[disnake.abc.PrivateChannel]):
+    r"""Synchronous parser type with support for private channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.abc.PrivateChannel  # pyright: ignore[reportAssignmentType]
 
 
@@ -285,14 +303,32 @@ class GetPrivateChannelParser(GetChannelParserBase[disnake.abc.PrivateChannel]):
 
 
 @parser_base.register_parser_for(disnake.DMChannel)
-class GetDMChannelParser(GetChannelParserBase[disnake.DMChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetDMChannelParser(GetChannelParserBase[disnake.DMChannel]):
+    r"""Synchronous parser type with support for DM channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.DMChannel
 
 
 @parser_base.register_parser_for(disnake.GroupChannel)
-class GetGroupChannelParser(GetChannelParserBase[disnake.GroupChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetGroupChannelParser(GetChannelParserBase[disnake.GroupChannel]):
+    r"""Synchronous parser type with support for group channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.GroupChannel
 
 
@@ -300,44 +336,107 @@ class GetGroupChannelParser(GetChannelParserBase[disnake.GroupChannel]):  # noqa
 
 
 @parser_base.register_parser_for(disnake.ForumChannel)
-class GetForumChannelParser(GetChannelParserBase[disnake.ForumChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetForumChannelParser(GetChannelParserBase[disnake.ForumChannel]):
+    r"""Synchronous parser type with support for forum channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.ForumChannel
 
 
 @parser_base.register_parser_for(disnake.NewsChannel)
-class GetNewsChannelParser(GetChannelParserBase[disnake.NewsChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetNewsChannelParser(GetChannelParserBase[disnake.NewsChannel]):
+    r"""Synchronous parser type with support for news channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.NewsChannel
 
 
 @parser_base.register_parser_for(disnake.VoiceChannel)
-class GetVoiceChannelParser(GetChannelParserBase[disnake.VoiceChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetVoiceChannelParser(GetChannelParserBase[disnake.VoiceChannel]):
+    r"""Synchronous parser type with support for voice channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.VoiceChannel
 
 
 @parser_base.register_parser_for(disnake.StageChannel)
-class GetStageChannelParser(GetChannelParserBase[disnake.StageChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetStageChannelParser(GetChannelParserBase[disnake.StageChannel]):
+    r"""Synchronous parser type with support for stage channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.StageChannel
 
 
 @parser_base.register_parser_for(disnake.TextChannel)
-class GetTextChannelParser(GetChannelParserBase[disnake.TextChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetTextChannelParser(GetChannelParserBase[disnake.TextChannel]):
+    r"""Synchronous parser type with support for text channels.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.TextChannel
 
 
 @parser_base.register_parser_for(disnake.Thread)
-class GetThreadParser(GetChannelParserBase[disnake.Thread]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetThreadParser(GetChannelParserBase[disnake.Thread]):
+    r"""Synchronous parser type with support for threads.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.Thread
 
 
 @parser_base.register_parser_for(disnake.CategoryChannel)
-class GetCategoryParser(GetChannelParserBase[disnake.CategoryChannel]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class GetCategoryParser(GetChannelParserBase[disnake.CategoryChannel]):
+    r"""Synchronous parser type with support for categories.
+
+    Parameters
+    ----------
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
+
     parser_type = disnake.CategoryChannel
 
 
