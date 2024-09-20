@@ -12,3 +12,4 @@ Submodules
    base </api_ref/impl/parser/base>
    builtins </api_ref/impl/parser/builtins>
    datetime </api_ref/impl/parser/datetime>
+   snowflake </api_ref/impl/parser/snowflake>
