@@ -614,7 +614,7 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
         return self.collection_type(parsed)  # pyright: ignore[reportCallIssue]
 
     async def dumps(self, argument: _CollectionT) -> str:
-        """Dump a tuple into a collection.
+        """Dump a collection into a string.
 
         Parameters
         ----------
