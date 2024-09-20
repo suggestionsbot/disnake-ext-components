@@ -6,7 +6,8 @@ import typing
 
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
-from disnake.ext.components.impl.parser import helpers, snowflake
+from disnake.ext.components.impl.parser import builtins as builtins_parsers
+from disnake.ext.components.impl.parser import helpers
 
 if typing.TYPE_CHECKING:
     from disnake.ext import commands
@@ -81,10 +82,10 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     # <<docstring inherited from parser_api.Parser>>
 
     parser_type: typing.Type[_ChannelT]
+    int_parser: builtins_parsers.IntParser
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.dumps = snowflake.snowflake_dumps
+    def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
+        self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
     def loads(
         self,
@@ -96,7 +97,8 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     ) -> _ChannelT:
         # <<docstring inherited from parser_api.Parser>>
 
-        channel = _get_source(source).get_channel(int(argument))
+        channel_id = self.int_parser.loads(argument)
+        channel = _get_source(source).get_channel(channel_id)
 
         if channel is None:
             msg = f"Could not find a channel with id {argument!r}."
@@ -105,10 +107,15 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         if not isinstance(channel, self.parser_type):
             msg = (
                 f"Found a channel of type {type(channel).__name__!r} for id"
-                f"{argument!r}, expected (any of) type(s) {self.parser_type.__name__}."
+                f" {argument!r}, expected type {self.parser_type.__name__!r}."
             )
             raise TypeError(msg)
         return channel
+
+    def dumps(self, argument: _ChannelT) -> str:
+        # <<docstring inherited from parser_api.Parser>>
+
+        return self.int_parser.dumps(argument.id)
 
 
 # GET AND FETCH
@@ -118,15 +125,15 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     # <<docstring inherited from parser_api.Parser>>
 
     parser_type: typing.Type[_ChannelT]
+    int_parser: builtins_parsers.IntParser
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.dumps = snowflake.snowflake_dumps
+    def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
+        self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
     async def loads(self, argument: str, *, source: disnake.Interaction) -> _ChannelT:
         # <<docstring inherited from parser_api.Parser>>
 
-        channel_id = int(argument)
+        channel_id = self.int_parser.loads(argument)
         channel = (
             source.bot.get_channel(channel_id)
             or await source.bot.fetch_channel(channel_id)
@@ -135,10 +142,15 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         if not isinstance(channel, self.parser_type):
             msg = (
                 f"Found a channel of type {type(channel).__name__!r} for id"
-                f" {argument!r}, expected (any of) type(s) {self.parser_type.__name__}."
+                f" {argument!r}, expected type {self.parser_type.__name__!r}."
             )
             raise TypeError(msg)
         return channel
+
+    def dumps(self, argument: _ChannelT) -> str:
+        # <<docstring inherited from parser_api.Parser>>
+
+        return self.int_parser.dumps(argument.id)
 
 
 # ABSTRACT
@@ -295,11 +307,16 @@ class CategoryParser(ChannelParserBase[disnake.CategoryChannel]):  # noqa: D101
 class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessageable]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
 
+    channel_type: typing.Optional[disnake.ChannelType]
+    int_parser: builtins_parsers.IntParser
+
     def __init__(
-        self, channel_type: typing.Optional[disnake.ChannelType] = None
+        self,
+        channel_type: typing.Optional[disnake.ChannelType] = None,
+        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
     ) -> None:
         self.channel_type = channel_type
-        self.dumps = snowflake.snowflake_dumps
+        self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
     def loads(  # noqa: D102
         self, argument: str, *, source: helpers.BotAware
@@ -307,3 +324,8 @@ class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessagea
         # <<docstring inherited from parser_api.Parser>>
 
         return source.bot.get_partial_messageable(int(argument), type=self.channel_type)
+
+    def dumps(self, argument: disnake.PartialMessageable) -> str:  # noqa: D102
+        # <<docstring inherited from parser_api.Parser>>
+
+        return self.int_parser.dumps(argument.id)
