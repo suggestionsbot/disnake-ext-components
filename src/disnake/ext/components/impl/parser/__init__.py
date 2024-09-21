@@ -11,7 +11,6 @@ from disnake.ext.components.impl.parser.datetime import *
 from disnake.ext.components.impl.parser.emoji import *
 from disnake.ext.components.impl.parser.enum import *
 from disnake.ext.components.impl.parser.guild import *
-from disnake.ext.components.impl.parser.invite import *
 from disnake.ext.components.impl.parser.message import *
 from disnake.ext.components.impl.parser.role import *
 from disnake.ext.components.impl.parser.snowflake import *
