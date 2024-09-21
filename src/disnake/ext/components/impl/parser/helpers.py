@@ -56,5 +56,32 @@ class ChannelAware(typing.Protocol):
         ...
 
 
+@typing.runtime_checkable
+class AuthorAware(typing.Protocol):
+    """Protocol for a class that contains a reference to an author."""
+
+    @property
+    def author(self) -> typing.Union[disnake.User, disnake.Member]:  # noqa: D102
+        ...
+
+
 class BotAndGuildAware(BotAware, GuildAware, typing.Protocol):
     """Protocol for a class that contains a refernce to the bot and a guild."""
+
+
+def get_guild_from_source(source: object) -> disnake.Guild:
+    """Try to get a guild from various source types."""
+    if isinstance(source, GuildAware) and source.guild:
+        return source.guild
+
+    if isinstance(source, MessageAware):
+        return get_guild_from_source(source.message)
+
+    if isinstance(source, ChannelAware):
+        return get_guild_from_source(source.channel)
+
+    if isinstance(source, AuthorAware) and isinstance(source.author, disnake.Member):
+        return get_guild_from_source(source.author)
+
+    msg = "Cannot get a role from an object that doesn't reference a guild."
+    raise TypeError(msg)

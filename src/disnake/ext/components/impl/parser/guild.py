@@ -18,22 +18,6 @@ __all__: typing.Sequence[str] = (
 )
 
 
-def _get_guild_from_source(
-    source: object,
-) -> disnake.Guild:
-    if isinstance(source, helpers.GuildAware) and source.guild:
-        return source.guild
-
-    if isinstance(source, helpers.MessageAware):
-        return _get_guild_from_source(source.message)
-
-    if isinstance(source, helpers.ChannelAware):
-        return _get_guild_from_source(source.channel)
-
-    msg = "Cannot get a role from an object that doesn't reference a guild."
-    raise TypeError(msg)
-
-
 @parser_base.register_parser_for(disnake.Guild)
 class GetGuildParser(parser_base.SourcedParser[disnake.Guild]):  # noqa: D101
     # <<docstring inherited from parser_api.Parser>>
@@ -189,7 +173,7 @@ class GetRoleParser(parser_base.SourcedParser[disnake.Role]):  # noqa: D101
     ) -> disnake.Role:
         # <<docstring inherited from parser_api.Parser>>
 
-        guild = _get_guild_from_source(source)
+        guild = helpers.get_guild_from_source(source)
         role_id = self.int_parser.loads(argument)
 
         role = guild.get_role(role_id)
@@ -226,7 +210,7 @@ class RoleParser(parser_base.SourcedParser[disnake.Role]):  # noqa: D101
     ) -> disnake.Role:
         # <<docstring inherited from parser_api.Parser>>
 
-        guild = _get_guild_from_source(source)
+        guild = helpers.get_guild_from_source(source)
         role_id = self.int_parser.loads(argument)
 
         role = guild.get_role(role_id)
