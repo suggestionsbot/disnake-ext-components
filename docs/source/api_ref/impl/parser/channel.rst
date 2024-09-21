@@ -76,3 +76,10 @@ Classes
 .. autoclass:: components.impl.parser.channel.ThreadParser
 
 .. autoclass:: components.impl.parser.channel.CategoryParser
+
+-----
+
+.. attributetable:: components.impl.parser.channel.PartialMessageableParser
+
+.. autoclass:: components.impl.parser.channel.PartialMessageableParser
+    :members:

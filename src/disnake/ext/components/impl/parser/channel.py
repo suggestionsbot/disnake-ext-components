@@ -165,7 +165,7 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         Parameters
         ----------
         argument:
-            The string that is to be converted into a snowflake.
+            The value that is to be dumped.
 
         """
         return self.int_parser.dumps(argument.id)
@@ -267,7 +267,7 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         Parameters
         ----------
         argument:
-            The string that is to be converted into a snowflake.
+            The value that is to be dumped.
 
         """
         return self.int_parser.dumps(argument.id)
@@ -655,11 +655,35 @@ class CategoryParser(ChannelParserBase[disnake.CategoryChannel]):
 
 
 @parser_base.register_parser_for(disnake.PartialMessageable)
-class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessageable]):  # noqa: D101
-    # <<docstring inherited from parser_api.Parser>>
+class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessageable]):
+    r"""Parser types with support for partial messageables.
+
+    Parameters
+    ----------
+    channel_type:
+        The channel type to use for :class:`disnake.PartialMessageable`\s
+        created by this class.
+
+        Defaults to ``None``.
+    int_parser:
+        The :class:`~components.impl.parser.builtins.IntParser` to use
+        internally for this parser.
+
+    """
 
     channel_type: typing.Optional[disnake.ChannelType]
+    r"""The channel type to use for :class:`disnake.PartialMessageable`\s
+    created by this class.
+
+    This determines which operations are valid on the partial messageables.
+    """
     int_parser: builtins_parsers.IntParser
+    """The :class:`~components.impl.parser.builtins.IntParser` to use
+    internally for this parser.
+
+    Since the default integer parser uses base-36 to "compress" numbers, the
+    default channel parser will also return compressed results.
+    """
 
     def __init__(
         self,
@@ -669,14 +693,37 @@ class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessagea
         self.channel_type = channel_type
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
-    def loads(  # noqa: D102
+    def loads(
         self, argument: str, *, source: helpers.BotAware
     ) -> disnake.PartialMessageable:
-        # <<docstring inherited from parser_api.Parser>>
+        """Load a partial messageable from a string.
 
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be loaded into a channel.
+
+            This always matches the channel type of the parser.
+        source:
+            The source to use for parsing.
+
+            Must be a type that has access to a :class:`bot <commands.Bot>`
+            attribute.
+
+        """
         return source.bot.get_partial_messageable(int(argument), type=self.channel_type)
 
-    def dumps(self, argument: disnake.PartialMessageable) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    def dumps(self, argument: disnake.PartialMessageable) -> str:
+        """Dump a partial messageable into a string.
 
+        This uses the underlying :attr:`int_parser`.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
         return self.int_parser.dumps(argument.id)
