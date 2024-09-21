@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import typing
 
 import disnake
@@ -151,10 +152,8 @@ class UserParser(parser_base.SourcedParser[disnake.User]):  # noqa: D101
             if user:
                 return user
 
-            try:
+            with contextlib.suppress(disnake.HTTPException):
                 return await source.bot.fetch_user(user_id)
-            except disnake.HTTPException:
-                pass
 
         # First, validate that the source author is a member.
         # If allow_fallback is True, return the source member regardless of
@@ -206,10 +205,8 @@ class MemberParser(parser_base.SourcedParser[disnake.Member]):  # noqa: D101
         if member:
             return member
 
-        try:
+        with contextlib.suppress(disnake.HTTPException):
             return await guild.fetch_member(member_id)
-        except disnake.HTTPException:
-            pass
 
         # First, validate that the source author is a member.
         # If allow_fallback is True, return the source member regardless of

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import typing
 
 import disnake
@@ -96,10 +97,8 @@ class GuildParser(parser_base.SourcedParser[disnake.Guild]):  # noqa: D101
             if guild:
                 return guild
 
-            try:
+            with contextlib.suppress(disnake.HTTPException):
                 return await source.bot.fetch_guild(guild_id)
-            except disnake.HTTPException:
-                pass
 
         # If allow_fallback is True, return the source guild regardless of
         # whether the id is correct. Otherwise, validate the id.
