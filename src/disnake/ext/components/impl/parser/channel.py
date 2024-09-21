@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import typing
 
 import disnake
@@ -53,9 +54,7 @@ _AnyChannel = typing.Union[
 _ChannelT = typing.TypeVar("_ChannelT", bound=_AnyChannel)
 
 
-def _get_source(
-    source: typing.Union[helpers.GuildAware, helpers.BotAware, helpers.MessageAware],
-) -> typing.Union[disnake.Guild, _AnyBot]:
+def _get_source(source: object) -> typing.Union[disnake.Guild, _AnyBot]:
     actual_source = None
     if isinstance(source, helpers.BotAware):
         actual_source = source.bot
@@ -88,6 +87,12 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     int_parser:
         The :class:`~components.impl.parser.builtins.IntParser` to use
         internally for this parser.
+    allow_fallback:
+        If :meth:`loads` fails to get a result, the ``source`` is checked for
+        a channel. If this channel is of the correct type and its id matches the
+        provided ``argument``, it is returned. If ``allow_fallback`` is set to
+        ``True``, the id validation is skipped, and the source channel is always
+        returned.
 
     """
 
@@ -99,8 +104,24 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     Since the default integer parser uses base-36 to "compress" numbers, the
     default channel parser will also return compressed results.
     """
+    allow_fallback: bool
+    """If :meth:`loads` fails to get a result, the ``source`` is checked for
+    a channel. If this channel is of the correct type and its id matches the
+    provided ``argument``, it is returned. If ``allow_fallback`` is set to
+    ``True``, the id validation is skipped, and the source channel is always
+    returned.
 
-    def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
+    .. warning::
+        This can result in :meth:`loads` returning a channel with an id that
+        does not match the ``argument``.
+    """
+
+    def __init__(
+        self,
+        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
+        *,
+        allow_fallback: bool = False,
+    ):
         if type(self) is GetChannelParserBase:
             msg = (
                 "'GetChannelParserBase' is a base class and should not be"
@@ -109,13 +130,17 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
             raise TypeError(msg)
 
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.allow_fallback = allow_fallback
 
     def loads(
         self,
         argument: str,
         *,
         source: typing.Union[
-            helpers.GuildAware, helpers.BotAware, helpers.MessageAware
+            helpers.GuildAware,
+            helpers.BotAware,
+            helpers.MessageAware,
+            helpers.ChannelAware,
         ],
     ) -> _ChannelT:
         """Load a channel from a string.
@@ -144,18 +169,25 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         """
         channel_id = self.int_parser.loads(argument)
         channel = _get_source(source).get_channel(channel_id)
+        if isinstance(channel, self.parser_type):
+            return channel
+
+        if (
+            isinstance(source, helpers.ChannelAware)
+            and isinstance(source.channel, self.parser_type)
+            and (self.allow_fallback or source.channel.id == channel_id)
+        ):
+            return source.channel
 
         if channel is None:
             msg = f"Could not find a channel with id {argument!r}."
             raise LookupError(msg)
 
-        if not isinstance(channel, self.parser_type):
-            msg = (
-                f"Found a channel of type {type(channel).__name__!r} for id"
-                f" {argument!r}, expected type {self.parser_type.__name__!r}."
-            )
-            raise TypeError(msg)
-        return channel
+        msg = (
+            f"Found a channel of type {type(channel).__name__!r} for id"
+            f" {argument!r}, expected type {self.parser_type.__name__!r}."
+        )
+        raise TypeError(msg)
 
     def dumps(self, argument: _ChannelT) -> str:
         """Dump a channel into a string.
@@ -188,6 +220,12 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     int_parser:
         The :class:`~components.impl.parser.builtins.IntParser` to use
         internally for this parser.
+    allow_fallback:
+        If :meth:`loads` fails to get a result, the ``source`` is checked for
+        a channel. If this channel is of the correct type and its id matches the
+        provided ``argument``, it is returned. If ``allow_fallback`` is set to
+        ``True``, the id validation is skipped, and the source channel is always
+        returned.
 
     """
 
@@ -199,8 +237,24 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     Since the default integer parser uses base-36 to "compress" numbers, the
     default channel parser will also return compressed results.
     """
+    allow_fallback: bool
+    """If :meth:`loads` fails to get a result, the ``source`` is checked for
+    a channel. If this channel is of the correct type and its id matches the
+    provided ``argument``, it is returned. If ``allow_fallback`` is set to
+    ``True``, the id validation is skipped, and the source channel is always
+    returned.
 
-    def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
+    .. warning::
+        This can result in :meth:`loads` returning a channel with an id that
+        does not match the ``argument``.
+    """
+
+    def __init__(
+        self,
+        int_parser: typing.Optional[builtins_parsers.IntParser] = None,
+        *,
+        allow_fallback: bool = False,
+    ):
         if type(self) is ChannelParserBase:
             msg = (
                 "'ChannelParserBase' is a base class and should not be"
@@ -209,8 +263,14 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
             raise TypeError(msg)
 
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.allow_fallback = allow_fallback
 
-    async def loads(self, argument: str, *, source: helpers.BotAware) -> _ChannelT:
+    async def loads(
+        self,
+        argument: str,
+        *,
+        source: typing.Union[helpers.BotAware, helpers.ChannelAware],
+    ) -> _ChannelT:
         """Asynchronously load a channel from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -235,29 +295,40 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
 
         Raises
         ------
-        :class:`disnake.NotFound`:
-            A channel with the id stored in the ``argument`` could not be found.
         :class:`TypeError`:
             A channel with the id stored in the ``argument`` was found, but it
             was of an incorrect channel type.
-        ...
-            Any other error raised by
-            :meth:`Bot.fetch_channel() <disnake.ext.commands.Bot.fetch_channel>`.
 
         """
         channel_id = self.int_parser.loads(argument)
-        channel = (
-            source.bot.get_channel(channel_id)
-            or await source.bot.fetch_channel(channel_id)
-        )  # fmt: skip
+        channel: typing.Optional[_AnyChannel] = None
 
-        if not isinstance(channel, self.parser_type):
-            msg = (
-                f"Found a channel of type {type(channel).__name__!r} for id"
-                f" {argument!r}, expected type {self.parser_type.__name__!r}."
-            )
-            raise TypeError(msg)
-        return channel
+        if isinstance(source, helpers.BotAware):
+            channel = source.bot.get_channel(channel_id)
+
+            if not channel:
+                with contextlib.suppress(disnake.HTTPException):
+                    channel = await source.bot.fetch_channel(channel_id)
+
+        if isinstance(channel, self.parser_type):
+            return channel
+
+        if (
+            isinstance(source, helpers.ChannelAware)
+            and isinstance(source.channel, self.parser_type)
+            and (self.allow_fallback or source.channel.id == channel_id)
+        ):
+            return source.channel
+
+        if channel is None:
+            msg = f"Could not find a channel with id {argument!r}."
+            raise LookupError(msg)
+
+        msg = (
+            f"Found a channel of type {type(channel).__name__!r} for id"
+            f" {argument!r}, expected type {self.parser_type.__name__!r}."
+        )
+        raise TypeError(msg)
 
     def dumps(self, argument: _ChannelT) -> str:
         """Dump a channel into a string.
