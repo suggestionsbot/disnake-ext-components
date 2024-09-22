@@ -11,6 +11,7 @@ Submodules
 
    base </api_ref/impl/parser/base>
    builtins </api_ref/impl/parser/builtins>
-   channel </api_ref/impl/parser/channel>
    datetime </api_ref/impl/parser/datetime>
+   enum </api_ref/impl/parser/enum>
+   channel </api_ref/impl/parser/channel>
    snowflake </api_ref/impl/parser/snowflake>

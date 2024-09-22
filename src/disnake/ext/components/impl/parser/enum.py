@@ -52,11 +52,31 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
     ----------
     enum_class:
         The enum or flag class to use for parsing.
+    store_by_value:
+        Whether :meth:`loads` and :meth:`dumps` expect the enum value type or a string.
+
+        For enum types where the members are *not* all of the same type, this
+        *must* be ``False``.
+
+        For enum types where all members are integers, this defaults to
+        ``True``, otherwise this defaults to ``False``.
 
     """
 
     enum_class: typing.Type[_EnumT]
+    """The enum or flag class to use for parsing."""
+    store_by_value: bool
+    """Whether :meth:`loads` and :meth:`dumps` expect the enum's value type or a string.
+
+    For enum types where the members are *not* all of the same type, this
+    *must* be ``False``.
+    """
     value_parser: parser_base.AnyParser
+    """The parser responsible for converting to/from the enum type.
+
+    If :attr:`store_by_values` is set to ``False``, this is *always* a
+    :class:`~components.parser.StringParser`.
+    """
 
     def __init__(
         self,
@@ -64,8 +84,6 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
         *,
         store_by_value: typing.Optional[bool] = None,
     ) -> None:
-        value_type = _get_enum_type(enum_class)
-
         if issubclass(enum_class, disnake.flags.BaseFlags) and store_by_value is False:
             msg = (
                 "Cannot store disnake flags by name, as their members do not have"
@@ -73,11 +91,13 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
             )
             raise ValueError(msg)
 
+        value_type = _get_enum_type(enum_class)
+
         # If the enum is not of a single type and store_by_value wasn't
         # explicitly set or was explicitly set to false, parse by name.
         if value_type is None and not store_by_value:
             self.store_by_value = False
-            self.value_type = str
+            value_type = str
 
         # If the value type could be determined, set it on the parser and
         # respect the input for store_by_value-- default to True for integers.
@@ -87,7 +107,6 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
                 if store_by_value is None
                 else store_by_value
             )  # fmt: skip
-            self.value_type = value_type
 
         # If the value type could not be determined but the user explicitly set
         # store_by_value to True, raise an exception.
@@ -100,11 +119,31 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
             raise ValueError(msg)
 
         self.enum_class = enum_class
-        self.value_parser = parser_base.get_parser(self.value_type)
+        self.value_parser = parser_base.get_parser(value_type)
 
-    async def loads(self, argument: str, *, source: object) -> _EnumT:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    async def loads(self, argument: str, *, source: object) -> _EnumT:
+        """Load an enum member from a string.
 
+        This uses the underlying :attr:`value_parser`.
+
+        .. note::
+            If :attr:`store_by_value` is True, the ``argument`` is expected to
+            be the value of an enum member; otherwise, the ``argument`` is
+            expted to be the name.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be loaded into a channel.
+
+            This always matches the channel type of the parser.
+        source:
+            The source to use for parsing.
+
+            If any of the inner parsers are sourced, this is automatically
+            passed to them.
+
+        """
         parsed = await parser_base.try_loads(self.value_parser, argument, source=source)
 
         if self.store_by_value:
@@ -112,8 +151,20 @@ class EnumParser(parser_base.SourcedParser[_EnumT]):
         else:
             return self.enum_class[parsed]  # pyright: ignore[reportInvalidTypeArguments]
 
-    async def dumps(self, argument: _EnumT) -> str:  # noqa: D102
-        # <<docstring inherited from parser_api.Parser>>
+    async def dumps(self, argument: _EnumT) -> str:
+        """Dump an enum member into a string.
+
+        .. note::
+            If :attr:`store_by_value` is True, this dumps the name of the
+            enum member passed as ``argument``; otherwise, this dumps its
+            value.
+
+        Parameters
+        ----------
+        argument:
+            The value that is to be dumped.
+
+        """
         if self.store_by_value:
             result = self.value_parser.dumps(argument.value)
         else:
