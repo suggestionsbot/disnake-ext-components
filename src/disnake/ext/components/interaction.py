@@ -6,6 +6,7 @@ import functools
 import typing
 
 import disnake
+import typing_extensions
 from disnake.ext.components.api import component as component_api
 
 __all__: typing.Sequence[str] = (
@@ -46,16 +47,16 @@ MessageComponents = typing.Union[
     disnake.ui.MentionableSelect[typing.Any],
 ]
 
-P = typing.ParamSpec("P")
+P = typing_extensions.ParamSpec("P")
 InteractionT = typing.TypeVar("InteractionT", bound=disnake.Interaction)
 ReturnT = typing.TypeVar("ReturnT")
 
 InteractionCallback = typing.Callable[
-    typing.Concatenate[InteractionT, P],
+    typing_extensions.Concatenate[InteractionT, P],
     typing.Coroutine[None, None, ReturnT],
 ]
 InteractionCallbackMethod = typing.Callable[
-    typing.Concatenate[typing.Any, InteractionT, P],
+    typing_extensions.Concatenate[typing.Any, InteractionT, P],
     typing.Coroutine[None, None, ReturnT],
 ]
 
