@@ -8,7 +8,7 @@ import typing
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
-from disnake.ext.components.impl.parser import helpers
+from disnake.ext.components.impl.parser import source as parser_source
 
 __all__: typing.Sequence[str] = (
     "GetUserParser",
@@ -66,7 +66,7 @@ class GetUserParser(parser_base.SourcedParser[disnake.User]):
         self,
         argument: str,
         *,
-        source: typing.Union[helpers.BotAware, helpers.AuthorAware],
+        source: typing.Union[parser_source.BotAware, parser_source.AuthorAware],
     ) -> disnake.User:
         """Load a user from a string.
 
@@ -90,7 +90,7 @@ class GetUserParser(parser_base.SourcedParser[disnake.User]):
 
         """
         user_id = self.int_parser.loads(argument)
-        if isinstance(source, helpers.BotAware):
+        if isinstance(source, parser_source.BotAware):
             user = source.bot.get_user(user_id)
             if user:
                 return user
@@ -99,7 +99,7 @@ class GetUserParser(parser_base.SourcedParser[disnake.User]):
         # If allow_fallback is True, return the source user regardless of
         # whether the id is correct. Otherwise, validate the id.
         if (
-            isinstance(source, helpers.AuthorAware)
+            isinstance(source, parser_source.AuthorAware)
             and isinstance(source.author, disnake.User)
             and (self.allow_fallback or source.author.id == user_id)
         ):
@@ -171,10 +171,10 @@ class GetMemberParser(parser_base.SourcedParser[disnake.Member]):
         argument: str,
         *,
         source: typing.Union[
-            helpers.GuildAware,
-            helpers.MessageAware,
-            helpers.ChannelAware,
-            helpers.AuthorAware,
+            parser_source.GuildAware,
+            parser_source.MessageAware,
+            parser_source.ChannelAware,
+            parser_source.AuthorAware,
         ],
     ) -> disnake.Member:
         """Load a member from a string.
@@ -199,7 +199,7 @@ class GetMemberParser(parser_base.SourcedParser[disnake.Member]):
             A member with the id stored in the ``argument`` could not be found.
 
         """
-        guild = helpers.get_guild_from_source(source)
+        guild = parser_source.get_guild_from_source(source)
         member_id = self.int_parser.loads(argument)
 
         member = guild.get_member(member_id)
@@ -210,7 +210,7 @@ class GetMemberParser(parser_base.SourcedParser[disnake.Member]):
         # If allow_fallback is True, return the source member regardless of
         # whether the id is correct. Otherwise, validate the id.
         if (
-            isinstance(source, helpers.AuthorAware)
+            isinstance(source, parser_source.AuthorAware)
             and isinstance(source.author, disnake.Member)
             and (self.allow_fallback or source.author.id == member_id)
         ):
@@ -284,7 +284,7 @@ class UserParser(parser_base.SourcedParser[disnake.User]):
         self,
         argument: str,
         *,
-        source: typing.Union[helpers.BotAware, helpers.AuthorAware],
+        source: typing.Union[parser_source.BotAware, parser_source.AuthorAware],
     ) -> disnake.User:
         """Asynchronously load a user from a string.
 
@@ -308,7 +308,7 @@ class UserParser(parser_base.SourcedParser[disnake.User]):
 
         """
         user_id = self.int_parser.loads(argument)
-        if isinstance(source, helpers.BotAware):
+        if isinstance(source, parser_source.BotAware):
             user = source.bot.get_user(user_id)
             if user:
                 return user
@@ -320,7 +320,7 @@ class UserParser(parser_base.SourcedParser[disnake.User]):
         # If allow_fallback is True, return the source user regardless of
         # whether the id is correct. Otherwise, validate the id.
         if (
-            isinstance(source, helpers.AuthorAware)
+            isinstance(source, parser_source.AuthorAware)
             and isinstance(source.author, disnake.User)
             and (self.allow_fallback or source.author.id == user_id)
         ):
@@ -395,10 +395,10 @@ class MemberParser(parser_base.SourcedParser[disnake.Member]):
         argument: str,
         *,
         source: typing.Union[
-            helpers.GuildAware,
-            helpers.MessageAware,
-            helpers.ChannelAware,
-            helpers.AuthorAware,
+            parser_source.GuildAware,
+            parser_source.MessageAware,
+            parser_source.ChannelAware,
+            parser_source.AuthorAware,
         ],
     ) -> disnake.Member:
         """Asynchronously load a member from a string.
@@ -423,7 +423,7 @@ class MemberParser(parser_base.SourcedParser[disnake.Member]):
             A member with the id stored in the ``argument`` could not be found.
 
         """
-        guild = helpers.get_guild_from_source(source)
+        guild = parser_source.get_guild_from_source(source)
 
         member_id = self.int_parser.loads(argument)
         member = guild.get_member(member_id)
@@ -437,7 +437,7 @@ class MemberParser(parser_base.SourcedParser[disnake.Member]):
         # If allow_fallback is True, return the source member regardless of
         # whether the id is correct. Otherwise, validate the id.
         if (
-            isinstance(source, helpers.AuthorAware)
+            isinstance(source, parser_source.AuthorAware)
             and isinstance(source.author, disnake.Member)
             and (self.allow_fallback or source.author.id == member_id)
         ):

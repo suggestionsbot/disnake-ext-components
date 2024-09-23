@@ -7,7 +7,7 @@ import typing
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
-from disnake.ext.components.impl.parser import helpers
+from disnake.ext.components.impl.parser import source as parser_source
 
 __all__: typing.Sequence[str] = (
     "PartialEmojiParser",
@@ -105,7 +105,7 @@ class GetEmojiParser(parser_base.SourcedParser[disnake.Emoji]):
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
-    def loads(self, argument: str, *, source: helpers.BotAware) -> disnake.Emoji:
+    def loads(self, argument: str, *, source: parser_source.BotAware) -> disnake.Emoji:
         """Load an emoji from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -171,7 +171,12 @@ class GetStickerParser(parser_base.SourcedParser[disnake.Sticker]):
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
-    def loads(self, argument: str, *, source: helpers.BotAware) -> disnake.Sticker:
+    def loads(
+        self,
+        argument: str,
+        *,
+        source: parser_source.BotAware,
+    ) -> disnake.Sticker:
         """Load a sticker from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -244,7 +249,7 @@ class EmojiParser(parser_base.SourcedParser[disnake.Emoji]):
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
     async def loads(
-        self, argument: str, *, source: helpers.BotAndGuildAware
+        self, argument: str, *, source: parser_source.BotAndGuildAware
     ) -> disnake.Emoji:
         """Asynchronously load an emoji from a string.
 
@@ -331,7 +336,7 @@ class StickerParser(parser_base.SourcedParser[disnake.Sticker]):
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
     async def loads(
-        self, argument: str, *, source: helpers.BotAndGuildAware
+        self, argument: str, *, source: parser_source.BotAndGuildAware
     ) -> disnake.Sticker:
         """Asynchronously load a sticker from a string.
 

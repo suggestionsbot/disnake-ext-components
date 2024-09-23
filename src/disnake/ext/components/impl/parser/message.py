@@ -8,7 +8,7 @@ import typing
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
-from disnake.ext.components.impl.parser import helpers
+from disnake.ext.components.impl.parser import source as parser_source
 
 __all__: typing.Sequence[str] = (
     "PartialMessageParser",
@@ -90,9 +90,9 @@ class PartialMessageParser(parser_base.SourcedParser[disnake.PartialMessage]):
         """
         channel = self.channel
         if not channel:
-            if isinstance(source, helpers.ChannelAware):
+            if isinstance(source, parser_source.ChannelAware):
                 channel = source.channel
-            elif isinstance(source, helpers.PartialMessageAware):
+            elif isinstance(source, parser_source.PartialMessageAware):
                 channel = source
 
         if not channel:
@@ -166,7 +166,7 @@ class GetMessageParser(parser_base.SourcedParser[disnake.Message]):
         self,
         argument: str,
         *,
-        source: typing.Union[helpers.BotAware, helpers.MessageAware],
+        source: typing.Union[parser_source.BotAware, parser_source.MessageAware],
     ) -> disnake.Message:
         """Load a message from a string.
 
@@ -190,7 +190,7 @@ class GetMessageParser(parser_base.SourcedParser[disnake.Message]):
         """
         message_id = self.int_parser.loads(argument)
 
-        if isinstance(source, helpers.BotAware):
+        if isinstance(source, parser_source.BotAware):
             message = source.bot.get_message(message_id)
             if message:
                 return message
@@ -198,7 +198,7 @@ class GetMessageParser(parser_base.SourcedParser[disnake.Message]):
         # If allow_fallback is True, return the source message regardless of
         # whether the id is correct. Otherwise, validate the id.
         if (
-            isinstance(source, helpers.MessageAware)
+            isinstance(source, parser_source.MessageAware)
             and (self.allow_fallback or source.message.id == message_id)
         ):  # fmt: skip
             return source.message
@@ -272,9 +272,9 @@ class MessageParser(parser_base.SourcedParser[disnake.Message]):
         argument: str,
         *,
         source: typing.Union[
-            helpers.BotAware,
-            helpers.ChannelAware,
-            helpers.MessageAware,
+            parser_source.BotAware,
+            parser_source.ChannelAware,
+            parser_source.MessageAware,
         ],
     ) -> disnake.Message:
         """Asynchronously load a message from a string.
@@ -305,12 +305,12 @@ class MessageParser(parser_base.SourcedParser[disnake.Message]):
 
         """
         message_id = self.int_parser.loads(argument)
-        if isinstance(source, helpers.BotAware):
+        if isinstance(source, parser_source.BotAware):
             message = source.bot.get_message(message_id)
             if message:
                 return message
 
-        if isinstance(source, helpers.ChannelAware):
+        if isinstance(source, parser_source.ChannelAware):
             with contextlib.suppress(disnake.HTTPException):
                 message = await source.channel.fetch_message(message_id)
                 if message:
@@ -319,7 +319,7 @@ class MessageParser(parser_base.SourcedParser[disnake.Message]):
         # If allow_fallback is True, return the source message regardless of
         # whether the id is correct. Otherwise, validate the id.
         if (
-            isinstance(source, helpers.MessageAware)
+            isinstance(source, parser_source.MessageAware)
             and (self.allow_fallback or source.message.id == message_id)
         ):  # fmt: skip
             return source.message

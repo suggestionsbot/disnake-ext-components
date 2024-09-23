@@ -8,7 +8,7 @@ import typing
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
-from disnake.ext.components.impl.parser import helpers
+from disnake.ext.components.impl.parser import source as parser_source
 
 __all__: typing.Sequence[str] = (
     "GuildParser",
@@ -67,7 +67,7 @@ class GetGuildParser(parser_base.SourcedParser[disnake.Guild]):
         self,
         argument: str,
         *,
-        source: typing.Union[helpers.BotAware, helpers.GuildAware],
+        source: typing.Union[parser_source.BotAware, parser_source.GuildAware],
     ) -> disnake.Guild:
         """Load a guild from a string.
 
@@ -92,7 +92,7 @@ class GetGuildParser(parser_base.SourcedParser[disnake.Guild]):
         """
         guild_id = self.int_parser.loads(argument)
 
-        if isinstance(source, helpers.BotAware):
+        if isinstance(source, parser_source.BotAware):
             guild = source.bot.get_guild(guild_id)
             if guild:
                 return guild
@@ -100,7 +100,7 @@ class GetGuildParser(parser_base.SourcedParser[disnake.Guild]):
         # If allow_fallback is True, return the guild regardless of
         # whether the id is correct. Otherwise, validate the id.
         if (
-            isinstance(source, helpers.GuildAware)
+            isinstance(source, parser_source.GuildAware)
             and source.guild
             and (self.allow_fallback or source.guild.id == guild_id)
         ):
@@ -174,7 +174,7 @@ class GuildParser(parser_base.SourcedParser[disnake.Guild]):
         self,
         argument: str,
         *,
-        source: typing.Union[helpers.BotAware, helpers.GuildAware],
+        source: typing.Union[parser_source.BotAware, parser_source.GuildAware],
     ) -> disnake.Guild:
         """Asynchronously load a guild from a string.
 
@@ -204,7 +204,7 @@ class GuildParser(parser_base.SourcedParser[disnake.Guild]):
 
         """
         guild_id = self.int_parser.loads(argument)
-        if isinstance(source, helpers.BotAware):
+        if isinstance(source, parser_source.BotAware):
             guild = source.bot.get_guild(guild_id)
             if guild:
                 return guild
@@ -215,7 +215,7 @@ class GuildParser(parser_base.SourcedParser[disnake.Guild]):
         # If allow_fallback is True, return the source guild regardless of
         # whether the id is correct. Otherwise, validate the id.
         if (
-            isinstance(source, helpers.GuildAware)
+            isinstance(source, parser_source.GuildAware)
             and source.guild
             and (self.allow_fallback or source.guild.id == guild_id)
         ):
@@ -279,7 +279,12 @@ class InviteParser(parser_base.SourcedParser[disnake.Invite]):
         self.with_expiration = with_expiration
         self.guild_scheduled_event_id = guild_scheduled_event_id
 
-    async def loads(self, argument: str, *, source: helpers.BotAware) -> disnake.Invite:
+    async def loads(
+        self,
+        argument: str,
+        *,
+        source: parser_source.BotAware,
+    ) -> disnake.Invite:
         """Asynchronously load a guild invite from a string.
 
         This uses the underlying :attr:`int_parser`.
@@ -350,9 +355,9 @@ class GetRoleParser(parser_base.SourcedParser[disnake.Role]):
         argument: str,
         *,
         source: typing.Union[
-            helpers.GuildAware,
-            helpers.MessageAware,
-            helpers.ChannelAware,
+            parser_source.GuildAware,
+            parser_source.MessageAware,
+            parser_source.ChannelAware,
         ],
     ) -> disnake.Role:
         """Load a role from a string.
@@ -376,7 +381,7 @@ class GetRoleParser(parser_base.SourcedParser[disnake.Role]):
             A role with the id stored in the ``argument`` could not be found.
 
         """
-        guild = helpers.get_guild_from_source(source)
+        guild = parser_source.get_guild_from_source(source)
         role_id = self.int_parser.loads(argument)
 
         role = guild.get_role(role_id)
@@ -431,9 +436,9 @@ class RoleParser(parser_base.SourcedParser[disnake.Role]):
         argument: str,
         *,
         source: typing.Union[
-            helpers.GuildAware,
-            helpers.MessageAware,
-            helpers.ChannelAware,
+            parser_source.GuildAware,
+            parser_source.MessageAware,
+            parser_source.ChannelAware,
         ],
     ) -> disnake.Role:
         """Asynchronously load a role from a string.
@@ -463,7 +468,7 @@ class RoleParser(parser_base.SourcedParser[disnake.Role]):
             A role with the id stored in the ``argument`` could not be found.
 
         """
-        guild = helpers.get_guild_from_source(source)
+        guild = parser_source.get_guild_from_source(source)
         role_id = self.int_parser.loads(argument)
 
         role = guild.get_role(role_id)

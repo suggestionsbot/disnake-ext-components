@@ -8,7 +8,7 @@ import typing
 import disnake
 from disnake.ext.components.impl.parser import base as parser_base
 from disnake.ext.components.impl.parser import builtins as builtins_parsers
-from disnake.ext.components.impl.parser import helpers
+from disnake.ext.components.impl.parser import source as parser_source
 
 if typing.TYPE_CHECKING:
     from disnake.ext import commands
@@ -56,13 +56,13 @@ _ChannelT = typing.TypeVar("_ChannelT", bound=_AnyChannel)
 
 def _get_source(source: object) -> typing.Union[disnake.Guild, _AnyBot]:
     actual_source = None
-    if isinstance(source, helpers.BotAware):
+    if isinstance(source, parser_source.BotAware):
         actual_source = source.bot
 
-    if actual_source is None and isinstance(source, helpers.MessageAware):
+    if actual_source is None and isinstance(source, parser_source.MessageAware):
         actual_source = source.message.guild
 
-    if actual_source is None and isinstance(source, helpers.GuildAware):
+    if actual_source is None and isinstance(source, parser_source.GuildAware):
         actual_source = source.guild
 
     if actual_source is not None:
@@ -140,10 +140,10 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         argument: str,
         *,
         source: typing.Union[
-            helpers.GuildAware,
-            helpers.BotAware,
-            helpers.MessageAware,
-            helpers.ChannelAware,
+            parser_source.GuildAware,
+            parser_source.BotAware,
+            parser_source.MessageAware,
+            parser_source.ChannelAware,
         ],
     ) -> _ChannelT:
         """Load a channel from a string.
@@ -176,7 +176,7 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
             return channel
 
         if (
-            isinstance(source, helpers.ChannelAware)
+            isinstance(source, parser_source.ChannelAware)
             and isinstance(source.channel, self.parser_type)
             and (self.allow_fallback or source.channel.id == channel_id)
         ):
@@ -272,7 +272,7 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         self,
         argument: str,
         *,
-        source: typing.Union[helpers.BotAware, helpers.ChannelAware],
+        source: typing.Union[parser_source.BotAware, parser_source.ChannelAware],
     ) -> _ChannelT:
         """Asynchronously load a channel from a string.
 
@@ -308,7 +308,7 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
         channel_id = self.int_parser.loads(argument)
         channel: typing.Optional[_AnyChannel] = None
 
-        if isinstance(source, helpers.BotAware):
+        if isinstance(source, parser_source.BotAware):
             channel = source.bot.get_channel(channel_id)
 
             if not channel:
@@ -319,7 +319,7 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
             return channel
 
         if (
-            isinstance(source, helpers.ChannelAware)
+            isinstance(source, parser_source.ChannelAware)
             and isinstance(source.channel, self.parser_type)
             and (self.allow_fallback or source.channel.id == channel_id)
         ):
@@ -770,7 +770,7 @@ class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessagea
         self.int_parser = int_parser or builtins_parsers.IntParser.default()
 
     def loads(
-        self, argument: str, *, source: helpers.BotAware
+        self, argument: str, *, source: parser_source.BotAware
     ) -> disnake.PartialMessageable:
         """Load a partial messageable from a string.
 

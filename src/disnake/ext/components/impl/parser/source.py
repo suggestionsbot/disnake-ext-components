@@ -5,6 +5,18 @@ import typing
 import disnake
 from disnake.ext import commands
 
+__all__: typing.Sequence[str] = (
+    "BotAware",
+    "GuildAware",
+    "MessageAware",
+    "PartialMessageAware",
+    "ChannelAware",
+    "AuthorAware",
+    "BotAndGuildAware",
+    "get_guild_from_source",
+)
+
+
 _AnyBot = typing.Union[
     commands.Bot,
     commands.InteractionBot,
@@ -51,7 +63,9 @@ class MessageAware(typing.Protocol):
 class PartialMessageAware(typing.Protocol):
     """Protocol for a class that can create partial messages."""
 
-    def get_partial_message(self, message_id: int, /) -> disnake.PartialMessage:  # noqa: D102
+    def get_partial_message(  # noqa: D102
+        self, message_id: int, /
+    ) -> disnake.PartialMessage:
         ...
 
 
