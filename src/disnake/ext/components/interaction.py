@@ -471,7 +471,7 @@ def wrap_interaction_for(
     specialised components directly, without having to first convert them to
     native disnake components.
 
-    .. see-also::
+    .. seealso::
         This uses :func:`wrap_interaction` under the hood.
 
     Parameters
