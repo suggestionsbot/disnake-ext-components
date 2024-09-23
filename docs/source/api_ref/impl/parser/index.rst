@@ -13,5 +13,7 @@ Submodules
    builtins </api_ref/impl/parser/builtins>
    datetime </api_ref/impl/parser/datetime>
    enum </api_ref/impl/parser/enum>
+
    channel </api_ref/impl/parser/channel>
+   emoji </api_ref/impl/parser/emoji>
    snowflake </api_ref/impl/parser/snowflake>

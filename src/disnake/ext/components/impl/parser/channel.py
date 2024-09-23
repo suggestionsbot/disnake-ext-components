@@ -727,7 +727,7 @@ class CategoryParser(ChannelParserBase[disnake.CategoryChannel]):
 
 @parser_base.register_parser_for(disnake.PartialMessageable)
 class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessageable]):
-    r"""Parser types with support for partial messageables.
+    r"""Parser type with support for partial messageables.
 
     Parameters
     ----------
