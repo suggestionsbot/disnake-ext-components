@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import functools
 import typing
 
 import disnake
 from disnake.ext.components.api import component as component_api
 
-__all__: typing.Sequence[str] = ("MessageInteraction", "wrap_interaction")
+__all__: typing.Sequence[str] = (
+    "WrappedInteraction",
+    "MessageInteraction",
+    "CommandInteraction",
+    "wrap_interaction",
+    "wrap_interaction_for",
+)
 
 
 ComponentT = typing.TypeVar(
@@ -39,6 +46,18 @@ MessageComponents = typing.Union[
     disnake.ui.MentionableSelect[typing.Any],
 ]
 
+P = typing.ParamSpec("P")
+InteractionT = typing.TypeVar("InteractionT", bound=disnake.Interaction)
+ReturnT = typing.TypeVar("ReturnT")
+
+InteractionCallback = typing.Callable[
+    typing.Concatenate[InteractionT, P],
+    typing.Coroutine[None, None, ReturnT],
+]
+InteractionCallbackMethod = typing.Callable[
+    typing.Concatenate[typing.Any, InteractionT, P],
+    typing.Coroutine[None, None, ReturnT],
+]
 
 MISSING = disnake.utils.MISSING
 
@@ -257,7 +276,7 @@ class WrappedInteraction(disnake.Interaction):
 
     edit_original_message = edit_original_response
 
-    async def send(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: PLR0913
+    async def send(  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: PLR0913, D102
         self,
         content: typing.Optional[str] = None,
         *,
@@ -395,8 +414,35 @@ class MessageInteraction(  # pyright: ignore[reportIncompatibleMethodOverride, r
     # message = proxy.ProxiedProperty("_wrapped")
 
 
+class CommandInteraction(  # pyright: ignore[reportIncompatibleMethodOverride, reportIncompatibleVariableOverride]
+    WrappedInteraction, disnake.CommandInteraction
+):
+    """Message interaction implementation that wraps :class:`disnake.CommandInteraction`.
+
+    This wrapped command interaction class natively supports
+    disnake-ext-components' specialised components classes and -- unlike
+    vanilla disnake interactions -- can send them without manually having to
+    convert them to native disnake components first.
+
+    Attribute access is simply proxied to the wrapped command interaction
+    object by means of a custom :meth:`__getattr__` implementation.
+    """  # noqa: E501
+
+    def __init__(self, wrapped: disnake.CommandInteraction):
+        self._wrapped = wrapped
+
+
 @typing.overload
-def wrap_interaction(interaction: disnake.MessageInteraction) -> MessageInteraction:
+def wrap_interaction(
+    interaction: disnake.CommandInteraction,
+) -> CommandInteraction:
+    ...
+
+
+@typing.overload
+def wrap_interaction(
+    interaction: disnake.MessageInteraction,
+) -> MessageInteraction:
     ...
 
 
@@ -425,8 +471,8 @@ def wrap_interaction(interaction: disnake.Interaction) -> WrappedInteraction:
 
         - Wrapping a (subclass of) :class:`disnake.MessageInteraction` returns
           a :class:`MessageInteraction`,
-        - Wrapping a (subclass of) :class:`disnake.ModalInteraction` returns a
-          :class:`ModalInteraction`,
+        - Wrapping a (subclass of) :class:`disnake.CommandInteraction` returns a
+          :class:`CommandInteraction`,
         - Wrapping any other interaction class returns a
           :class:`WrappedInteraction`.
 
@@ -437,3 +483,112 @@ def wrap_interaction(interaction: disnake.Interaction) -> WrappedInteraction:
     # TODO: ModalInteraction
 
     return WrappedInteraction(interaction)
+
+
+def wrap_args_kwargs(
+    args: typing.Tuple[object, ...], kwargs: typing.Dict[str, object]
+) -> typing.Tuple[typing.Tuple[object, ...], typing.Dict[str, object]]:
+    args_iter = iter(args)
+    new_args: typing.List[object] = []
+
+    # We assume there's only ever going to be one interaction that needs to be
+    # wrapped. We check args first, and if no interaction was found, we check
+    # kwargs. Note that we only check at most two args.
+    for arg, _ in zip(args_iter, range(2)):
+        if isinstance(arg, disnake.Interaction):
+            new_args.append(wrap_interaction(arg))
+            break
+        else:
+            new_args.append(arg)
+
+    else:
+        for kw, arg in kwargs.items():
+            if isinstance(arg, disnake.Interaction):
+                kwargs[kw] = wrap_interaction(arg)
+                break
+
+        else:
+            msg = "No wrappable interaction was found!"
+            raise TypeError(msg)
+
+    new_args.extend(args_iter)
+
+    return tuple(new_args), kwargs
+
+
+@typing.overload
+def wrap_interaction_for(
+    callback: InteractionCallbackMethod[WrappedInteraction, P, ReturnT]
+) -> InteractionCallbackMethod[disnake.Interaction, P, ReturnT]:
+    ...
+
+
+@typing.overload
+def wrap_interaction_for(
+    callback: InteractionCallbackMethod[MessageInteraction, P, ReturnT]
+) -> InteractionCallbackMethod[disnake.MessageInteraction, P, ReturnT]:
+    ...
+
+
+@typing.overload
+def wrap_interaction_for(
+    callback: InteractionCallbackMethod[CommandInteraction, P, ReturnT]
+) -> InteractionCallbackMethod[disnake.CommandInteraction, P, ReturnT]:
+    ...
+
+
+@typing.overload
+def wrap_interaction_for(
+    callback: InteractionCallback[WrappedInteraction, P, ReturnT]
+) -> InteractionCallback[disnake.Interaction, P, ReturnT]:
+    ...
+
+
+@typing.overload
+def wrap_interaction_for(
+    callback: InteractionCallback[MessageInteraction, P, ReturnT]
+) -> InteractionCallback[disnake.MessageInteraction, P, ReturnT]:
+    ...
+
+
+@typing.overload
+def wrap_interaction_for(
+    callback: InteractionCallback[CommandInteraction, P, ReturnT]
+) -> InteractionCallback[disnake.CommandInteraction, P, ReturnT]:
+    ...
+
+
+def wrap_interaction_for(
+    callback: typing.Callable[..., typing.Coroutine[None, None, ReturnT]]
+) -> typing.Callable[..., typing.Coroutine[None, None, ReturnT]]:
+    """Wrap a callback that takes an interaction for disnake-ext-components compatibility.
+
+    Interactions wrapped in this way can send disnake-ext-components'
+    specialised components directly, without having to first convert them to
+    native disnake components.
+
+    .. see-also::
+        This uses :func:`wrap_interaction` under the hood.
+
+    Parameters
+    ----------
+    callback:
+        The callback to wrap.
+
+        This can be either a function or a method. In case of a function, the
+        interaction must be the first argument. Otherwise, it must be the
+        second argument after ``self``.
+
+    Returns
+    -------
+    :class:`typing.Callable`[..., :class:`typing.Any`]
+        The callback that had its interaction wrapped.
+
+    """  # noqa: E501
+
+    @functools.wraps(callback)
+    async def wrapper(*args: object, **kwargs: object) -> ReturnT:
+        args, kwargs = wrap_args_kwargs(args, kwargs)
+        return await callback(*args, **kwargs)
+
+    return wrapper
