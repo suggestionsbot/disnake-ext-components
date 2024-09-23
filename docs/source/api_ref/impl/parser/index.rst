@@ -16,4 +16,5 @@ Submodules
 
    channel </api_ref/impl/parser/channel>
    emoji </api_ref/impl/parser/emoji>
+   message </api_ref/impl/parser/message>
    snowflake </api_ref/impl/parser/snowflake>

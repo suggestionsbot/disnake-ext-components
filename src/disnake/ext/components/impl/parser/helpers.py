@@ -48,6 +48,14 @@ class MessageAware(typing.Protocol):
 
 
 @typing.runtime_checkable
+class PartialMessageAware(typing.Protocol):
+    """Protocol for a class that can create partial messages."""
+
+    def get_partial_message(self, message_id: int, /) -> disnake.PartialMessage:  # noqa: D102
+        ...
+
+
+@typing.runtime_checkable
 class ChannelAware(typing.Protocol):
     """Protocol for a class that contains a reference to a channel."""
 
