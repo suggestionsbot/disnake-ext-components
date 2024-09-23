@@ -82,6 +82,9 @@ def _get_source(source: object) -> typing.Union[disnake.Guild, _AnyBot]:
 class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     r"""Base class for synchronous parser types with support for channels.
 
+    .. note::
+        This class cannot be instantiated.
+
     Parameters
     ----------
     int_parser:
@@ -209,11 +212,11 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
 class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
     r"""Base class for asynchronous parser types with support for channels.
 
+    .. note::
+        This class cannot be instantiated.
+
     .. warning::
         This parser can make API requests.
-
-    .. note::
-        This class cannot be instantiated as it is a :class:`typing.Protocol`.
 
     Parameters
     ----------
