@@ -1,7 +1,7 @@
 .. currentmodule:: disnake.ext.components.impl
 
-Emoji Channel Parser Implementation
-=============================
+Emoji Parser Implementation
+===========================
 
 .. automodule:: components.impl.parser.emoji
 
