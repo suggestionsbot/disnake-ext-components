@@ -375,8 +375,8 @@ def wrap_interaction(interaction: disnake.Interaction) -> WrappedInteraction:
 
         - Wrapping a (subclass of) :class:`disnake.MessageInteraction` returns
           a :class:`MessageInteraction`,
-        - Wrapping a (subclass of) :class:`disnake.CommandInteraction` returns a
-          :class:`CommandInteraction`,
+        - Wrapping a (subclass of) :class:`disnake.ApplicationCommandInteraction`
+          returns a :class:`CommandInteraction`,
         - Wrapping any other interaction class returns a
           :class:`WrappedInteraction`.
 
@@ -465,7 +465,7 @@ def wrap_interaction_for(
 def wrap_interaction_for(
     callback: typing.Callable[..., typing.Coroutine[None, None, ReturnT]]
 ) -> typing.Callable[..., typing.Coroutine[None, None, ReturnT]]:
-    """Wrap a callback that takes an interaction for disnake-ext-components compatibility.
+    r"""Wrap a callback that takes an interaction for disnake-ext-components compatibility.
 
     Interactions wrapped in this way can send disnake-ext-components'
     specialised components directly, without having to first convert them to
@@ -485,7 +485,7 @@ def wrap_interaction_for(
 
     Returns
     -------
-    :class:`typing.Callable`[..., :class:`typing.Any`]
+    :obj:`~typing.Callable`\[:obj:`... <Ellipsis>`, :obj:`~typing.Coroutine`\[:obj:`None`, :obj:`None`, ``ReturnT``]]
         The callback that had its interaction wrapped.
 
     """  # noqa: E501
