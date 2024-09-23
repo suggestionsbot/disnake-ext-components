@@ -298,6 +298,8 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
 
         Raises
         ------
+        :class:`LookupError`:
+            A channel with the id stored in the ``argument`` could not be found.
         :class:`TypeError`:
             A channel with the id stored in the ``argument`` was found, but it
             was of an incorrect channel type.
