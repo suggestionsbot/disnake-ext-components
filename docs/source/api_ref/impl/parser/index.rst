@@ -19,3 +19,4 @@ Submodules
    message </api_ref/impl/parser/message>
    guild </api_ref/impl/parser/guild>
    snowflake </api_ref/impl/parser/snowflake>
+   user </api_ref/impl/parser/user>
