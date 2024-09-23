@@ -21,17 +21,5 @@ Classes
 
 .. attributetable:: components.impl.parser.message.MessageParser
 
-.. autoclass:: components.impl.parser.emoji.GetStickerParser
-    :members:
-
------
-
-.. attributetable:: components.impl.parser.emoji.EmojiParser
-
-.. autoclass:: components.impl.parser.emoji.EmojiParser
-    :members:
-
-.. attributetable:: components.impl.parser.emoji.StickerParser
-
 .. autoclass:: components.impl.parser.message.MessageParser
     :members:
