@@ -241,8 +241,8 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    async def parse_interaction(
-        self, interaction: disnake.Interaction
+    async def parse_message_interaction(
+        self, interaction: disnake.MessageInteraction
     ) -> typing.Optional[RichComponent]:
         """Parse an interaction and construct a rich component from it.
 
@@ -354,7 +354,7 @@ class ComponentManager(typing.Protocol):
         """
         ...
 
-    async def invoke(self, interaction: disnake.Interaction) -> None:
+    async def invoke_component(self, interaction: disnake.MessageInteraction) -> None:
         """Try to invoke a component with the given interaction.
 
         If this manager has no registered component that matches the interaction,

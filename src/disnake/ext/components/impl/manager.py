@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import contextvars
 import logging
 import sys
 import typing
@@ -26,6 +27,10 @@ _LOGGER = logging.getLogger(__name__)
 _ROOT = sys.intern("root")
 _COMPONENT_EVENT = sys.intern("on_message_interaction")
 _MODAL_EVENT = sys.intern("on_modal_submit")
+
+_COMPONENT_CTX: contextvars.ContextVar[
+    tuple[component_api.RichComponent, str]
+] = contextvars.ContextVar("_COMPONENT_CTX")
 
 
 T = typing.TypeVar("T")
@@ -413,7 +418,7 @@ class ComponentManager(component_api.ComponentManager):
 
         return self.sep.join([identifier, *dumped_params.values()])
 
-    async def parse_interaction(  # noqa: D102
+    async def parse_message_interaction(  # noqa: D102
         self, interaction: disnake.Interaction
     ) -> typing.Optional[component_api.RichComponent]:
         # <<docstring inherited from api.components.ComponentManager>>
@@ -557,12 +562,22 @@ class ComponentManager(component_api.ComponentManager):
             *reference_objects or [message, self.bot]
         )
 
+        current_component, current_component_id = _COMPONENT_CTX.get((None, None))
+        should_test = current_component is not None
+
         for row in message.components:
             new_row: typing.List[interaction_impl.MessageComponents] = []
             new_rows.append(new_row)
 
             for component in row.children:
-                new_component = await self.parse_raw_component(component, reference_obj)
+                if should_test and component.custom_id == current_component_id:
+                    should_test = False
+                    new_component = current_component
+
+                else:
+                    new_component = await self.parse_raw_component(
+                        component, reference_obj
+                    )
 
                 if new_component:
                     rich_components.append(new_component)
@@ -689,13 +704,13 @@ class ComponentManager(component_api.ComponentManager):
 
         # Ensure we don't duplicate the listeners.
         if (
-            self.invoke in bot.extra_events.get(_COMPONENT_EVENT, [])
-            or self.invoke in bot.extra_events.get(_MODAL_EVENT, [])
+            self.invoke_component in bot.extra_events.get(_COMPONENT_EVENT, [])
+            # or self.invoke_component in bot.extra_events.get(_MODAL_EVENT, [])
         ):  # fmt: skip
             message = "This component manager is already registered to this bot."
             raise RuntimeError(message)
 
-        bot.add_listener(self.invoke, _COMPONENT_EVENT)
+        bot.add_listener(self.invoke_component, _COMPONENT_EVENT)
         # bot.add_listener(self.invoke, _MODAL_EVENT)
 
         self._bot = bot
@@ -706,14 +721,14 @@ class ComponentManager(component_api.ComponentManager):
         # Bot.remove_listener silently ignores if the event doesn't exist,
         # so we manually handle raising an exception for it.
         if not (
-            self.invoke in bot.extra_events.get(_COMPONENT_EVENT, [])
-            and self.invoke in bot.extra_events.get(_MODAL_EVENT, [])
-        ):
+            self.invoke_component in bot.extra_events.get(_COMPONENT_EVENT, [])  # noqa: E713
+            # and self.invoke_component in bot.extra_events.get(_MODAL_EVENT, [])
+        ):  # fmt: skip
             message = "This component manager is not yet registered to this bot."
             raise RuntimeError(message)
 
-        bot.remove_listener(self.invoke, _COMPONENT_EVENT)
-        bot.remove_listener(self.invoke, _MODAL_EVENT)
+        bot.remove_listener(self.invoke_component, _COMPONENT_EVENT)
+        # bot.remove_listener(self.invoke_component, _MODAL_EVENT)
 
     def as_callback_wrapper(self, func: CallbackWrapperFuncT) -> CallbackWrapperFuncT:
         """Register a callback as this managers' callback wrapper.
@@ -826,11 +841,13 @@ class ComponentManager(component_api.ComponentManager):
         self.handle_exception = func
         return func
 
-    async def invoke(self, interaction: disnake.Interaction) -> None:  # noqa: D102
+    async def invoke_component(  # noqa: D102
+        self, interaction: disnake.MessageInteraction
+    ) -> None:
         # <<docstring inherited from api.components.ComponentManager>>
 
         # First, we check if the component is managed.
-        component = await self.parse_interaction(interaction)
+        component = await self.parse_message_interaction(interaction)
         if not (component and component.manager):
             # If the component was found, the manager is guaranteed to be
             # defined but we need the extra check for type-safety.
@@ -850,6 +867,10 @@ class ComponentManager(component_api.ComponentManager):
         # starting from the actual manager and propagated down to the root
         # manager if the error was left unhandled.
         managers = list(_recurse_parents(component.manager))
+
+        assert interaction.component.custom_id
+        ctx_value = (component, interaction.component.custom_id)
+        component_ctx_token = _COMPONENT_CTX.set(ctx_value)
 
         try:
             async with contextlib.AsyncExitStack() as stack:
@@ -874,6 +895,9 @@ class ComponentManager(component_api.ComponentManager):
                     # If an error handler returns True, consider the error
                     # handled and skip the remaining handlers.
                     break
+
+        finally:
+            _COMPONENT_CTX.reset(component_ctx_token)
 
     def make_button(  # noqa: PLR0913
         self,
