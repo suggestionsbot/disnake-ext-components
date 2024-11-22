@@ -34,7 +34,7 @@ class SnowflakeParser(parser_base.Parser[disnake.abc.Snowflake]):
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(self, argument: str) -> disnake.Object:
         """Load a snowflake from a string.

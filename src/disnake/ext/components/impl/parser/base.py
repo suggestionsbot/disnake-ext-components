@@ -24,8 +24,9 @@ MaybeCoroutine: typing_extensions.TypeAlias = typing.Union[
     _T,
 ]
 
-_PARSERS: typing.Dict[typing.Type[typing.Any], typing.Type[AnyParser]] = {}
+_PARSERS: typing.Dict[type, typing.Type[AnyParser]] = {}
 _REV_PARSERS: typing.Dict[typing.Type[AnyParser], typing.Tuple[type, ...]] = {}
+_PARSER_PRIORITY: typing.Dict[typing.Type[AnyParser], int] = {}
 
 
 def _issubclass(
@@ -44,6 +45,7 @@ def _issubclass(
 def register_parser(
     parser: typing.Type[ParserWithArgumentType[parser_api.ParserType]],
     *types: typing.Type[parser_api.ParserType],
+    priority: int = 0,
     force: bool = True,
 ) -> None:
     """Register a parser class as the default parser for the provided type.
@@ -59,6 +61,9 @@ def register_parser(
         The parser to register.
     *types:
         The types for which to register the provided parser as the default.
+    priority:
+        When a type has multiple parsers registered to it, priority is used to
+        determine which parser to use.
     force:
         Whether or not to overwrite existing defaults. Defaults to ``True``.
 
@@ -66,23 +71,20 @@ def register_parser(
     # This allows e.g. is_default_for=(Tuple[Any, ...],) so pyright doesn't complain.
     # The stored type will then still be tuple, as intended.
     types = tuple(typing.get_origin(type_) or type_ for type_ in types)
+    setter = (dict.__setitem__ if force else dict.setdefault)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
-    if force:
-        _REV_PARSERS[parser] = types
-        for type in types:
-            _PARSERS[type] = parser
-
-    else:
-        _REV_PARSERS.setdefault(parser, types)
-        for type in types:
-            _PARSERS.setdefault(type, parser)
+    setter(_REV_PARSERS, parser, types)
+    setter(_PARSER_PRIORITY, parser, priority)
+    for type_ in types:
+        setter(_PARSERS, type_, parser)
 
 
 def register_parser_for(
     *is_default_for: typing.Type[typing.Any],
+    priority: int = 0,
 ) -> typing.Callable[[typing.Type[AnyParserT]], typing.Type[AnyParserT]]:
     def wrapper(cls: typing.Type[AnyParserT]) -> typing.Type[AnyParserT]:
-        register_parser(cls, *is_default_for)
+        register_parser(cls, *is_default_for, priority=priority)
         return cls
 
     return wrapper
@@ -95,16 +97,21 @@ def _get_parser_type(
     if type_ in _PARSERS:
         return _PARSERS[type_]
 
-    # TODO: Make parsers accept a type and provide it to the parser here,
-    #       in the same way collection parsers support a collection type.
-
     # Slow lookup for subclasses of existing types...
-    for parser, parser_types in _REV_PARSERS.items():
-        if _issubclass(type_, parser_types):
-            return parser
+    best_entry = max(
+        (
+            entry
+            for entry, parser_types in _REV_PARSERS.items()
+            if _issubclass(type_, parser_types)
+        ),
+        default=None,
+        key=_PARSER_PRIORITY.__getitem__,
+    )
+    if best_entry is not None:
+        return best_entry
 
-    msg = f"No parser available for type {type_.__name__!r}."
-    raise TypeError(msg)
+    message = f"No parser available for type {type_.__name__!r}."
+    raise TypeError(message)
 
 
 # TODO: Maybe cache this?
@@ -136,30 +143,7 @@ def get_parser(  # noqa: D417
     #       (mainly for the purpose of not making api requests); but perhaps
     #       allowing the user to pass a filter function could be cool?
     origin = typing.get_origin(type_)
-
-    if not origin:
-        return _get_parser_type(type_).default()
-
-    parser_type = _get_parser_type(origin)
-    type_args = typing.get_args(type_)
-
-    if origin is typing.Union:
-        # In case of Optional (which is also a Union), we allow None, too.
-        inner_parsers = [get_parser(arg) for arg in type_args]
-        return parser_type(*inner_parsers)  # see UnionParser
-
-    if issubclass(origin, typing.Tuple):
-        inner_parsers = [get_parser(arg) for arg in type_args]
-        return parser_type(*inner_parsers)  # see TupleParser
-
-    if issubclass(origin, typing.Collection):
-        # see disnake.ext.components.parser.stdlib.CollectionParser
-        inner_type = next(iter(type_args), str)  # Get first element, default to str
-        inner_parser = get_parser(inner_type)
-        return parser_type(inner_parser, collection_type=origin)  # pyright: ignore
-
-    msg = f"Coult not create a parser for type {type_.__name__!r}."
-    raise TypeError(msg)
+    return _get_parser_type(origin or type_).default(type_)
 
 
 def is_sourced(
@@ -187,11 +171,18 @@ class _ParserBase(typing.Protocol[parser_api.ParserType]):
     #     super().__init__(*args, **kwargs)
 
     @classmethod
-    def default(cls) -> typing_extensions.Self:
+    def default(
+        cls, type_: type[parser_api.ParserType], /  # noqa: ARG003
+    ) -> typing_extensions.Self:
         """Return the default implementation of this parser type.
 
         By default, this will just create the parser class with no arguments,
         but this can be overwritten on child classes for customised behaviour.
+
+        Parameters
+        ----------
+        type_:
+            The exact type that this parser should be created for
 
         Returns
         -------

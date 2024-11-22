@@ -397,7 +397,7 @@ def _resolve_collection(type_: typing.Type[_CollectionT]) -> typing.Type[_Collec
 # NOTE: TupleParser *must* be registered before CollectionParser!
 
 
-@parser_base.register_parser_for(tuple)
+@parser_base.register_parser_for(tuple, priority=10)
 class TupleParser(parser_base.SourcedParser[_TupleT]):
     r"""Parser type with support for :class:`tuple`\s.
 
@@ -435,14 +435,35 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
         :attr:`ComponentManager.sep <components.impl.manager.ComponentManager.sep>`
         on the component manager that corresponds to this parser's component.
         """
+    tuple_cls: type[_TupleT]
+    """The tuple type to use.
+
+    This mainly exists to support NamedTuples.
+    """
+    # NOTE: NamedTuple does not show up in the class MRO so get_parser cannot
+    #       tell the difference. NamedTuple initialisation is different from
+    #       normal tuple initialisation, so we need to special-case it.
 
     def __init__(
         self,
         *inner_parsers: parser_base.AnyParser,
         sep: str = ",",
+        tuple_cls: type[_TupleT] = tuple,
     ) -> None:
-        self.inner_parsers = inner_parsers or (StringParser.default(),)
+        self.inner_parsers = inner_parsers or (StringParser.default(str),)
         self.sep = sep
+        self.tuple_cls = tuple_cls
+
+    @classmethod
+    def default(cls, type_: type[_TupleT], /) -> typing_extensions.Self:  # noqa: D102
+        if hasattr(type_, "__annotations__"):
+            # This is a namedtuple.
+            args = typing.get_type_hints(type_).values()
+        else:
+            args = typing.get_args(type_)
+
+        inner_parsers = [parser_base.get_parser(arg) for arg in args]
+        return cls(*inner_parsers, tuple_cls=type_)
 
     async def loads(self, argument: str, *, source: object) -> _TupleT:
         """Load a tuple from a string.
@@ -474,14 +495,13 @@ class TupleParser(parser_base.SourcedParser[_TupleT]):
             msg = f"Expected {len(self.inner_parsers)} arguments, got {len(parts)}."
             raise RuntimeError(msg)
 
-        return typing.cast(
-            _TupleT,
-            tuple(
-                [
-                    await parser_base.try_loads(parser, part, source=source)
-                    for parser, part in zip(self.inner_parsers, parts)
-                ]
-            ),
+        # NamedTuples should be instantiated using _make.
+        initialiser = getattr(self.tuple_cls, "_make", self.tuple_cls)
+        return initialiser(
+            [
+                await parser_base.try_loads(parser, part, source=source)
+                for parser, part in zip(self.inner_parsers, parts)
+            ]
         )
 
     async def dumps(self, argument: _TupleT) -> str:
@@ -569,7 +589,7 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
 
     def __init__(
         self,
-        inner_parser: typing.Optional[parser_base.Parser[typing.Any]] = None,
+        inner_parser: typing.Optional[parser_base.AnyParser] = None,
         *,
         collection_type: typing.Optional[typing.Type[_CollectionT]] = None,
         sep: str = ",",
@@ -580,8 +600,19 @@ class CollectionParser(parser_base.SourcedParser[_CollectionT]):
             list if collection_type is None else _resolve_collection(collection_type),
         )
         self.inner_parser = (
-            StringParser.default() if inner_parser is None else inner_parser
+            StringParser.default(str) if inner_parser is None else inner_parser
         )
+
+    @classmethod
+    def default(  # noqa: D102
+        cls, type_: type[_CollectionT], /
+    ) -> typing_extensions.Self:
+        origin = typing.get_origin(type_)
+        args = typing.get_args(type_)
+
+        inner_type = next(iter(args), str)  # Get first element, default to str
+        inner_parser = parser_base.get_parser(inner_type)
+        return cls(inner_parser, collection_type=origin)
 
     async def loads(
         self,
@@ -674,7 +705,14 @@ class UnionParser(parser_base.SourcedParser[_T], typing.Generic[_T]):
 
         # Ensure the NoneParser always comes last.
         if self.optional:
-            self.inner_parsers.append(NoneParser.default())
+            self.inner_parsers.append(NoneParser.default(_NoneType))
+
+    @classmethod
+    def default(cls, type_: type[_T], /) -> typing_extensions.Self:  # noqa: D102
+        args = typing.get_args(type_)
+
+        inner_parsers = [parser_base.get_parser(arg) for arg in args]
+        return cls(*inner_parsers)
 
     @property
     def strict(self) -> bool:

@@ -130,7 +130,7 @@ class DatetimeParser(parser_base.Parser[datetime.datetime]):
         self.resolution = resolution
         self.timezone = timezone
         self.strict = strict
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(self, argument: str) -> datetime.datetime:
         """Load a datetime from a string.
@@ -250,7 +250,7 @@ class TimedeltaParser(parser_base.Parser[datetime.timedelta]):
             raise ValueError(msg)
 
         self.resolution = resolution
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(self, argument: str) -> datetime.timedelta:
         """Load a timedelta from a string.
@@ -299,7 +299,7 @@ class DateParser(parser_base.Parser[datetime.date]):
     """
 
     def __init__(self, *, int_parser: typing.Optional[builtins_parsers.IntParser]):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(self, argument: str) -> datetime.date:
         """Load a date from a string.
@@ -380,7 +380,9 @@ class TimeParser(parser_base.Parser[datetime.time]):
         strict: bool = True,
     ):
         self.timezone = timezone
-        self.timedelta_parser = timedelta_parser or TimedeltaParser.default()
+        self.timedelta_parser = (
+            timedelta_parser or TimedeltaParser.default(datetime.timedelta)
+        )
         self.strict = strict
 
     @property

@@ -59,7 +59,7 @@ class GetUserParser(parser_base.SourcedParser[disnake.User]):
         *,
         allow_fallback: bool = False,
     ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     def loads(
@@ -163,7 +163,7 @@ class GetMemberParser(parser_base.SourcedParser[disnake.Member]):
         *,
         allow_fallback: bool = False,
     ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     def loads(
@@ -277,7 +277,7 @@ class UserParser(parser_base.SourcedParser[disnake.User]):
         *,
         allow_fallback: bool = False,
     ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     async def loads(
@@ -387,7 +387,7 @@ class MemberParser(parser_base.SourcedParser[disnake.Member]):
         *,
         allow_fallback: bool = False,
     ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     async def loads(

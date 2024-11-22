@@ -60,7 +60,7 @@ class GetGuildParser(parser_base.SourcedParser[disnake.Guild]):
         *,
         allow_fallback: bool = False,
     ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     def loads(
@@ -167,7 +167,7 @@ class GuildParser(parser_base.SourcedParser[disnake.Guild]):
         *,
         allow_fallback: bool = False,
     ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     async def loads(
@@ -348,7 +348,7 @@ class GetRoleParser(parser_base.SourcedParser[disnake.Role]):
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(
         self,
@@ -429,7 +429,7 @@ class RoleParser(parser_base.SourcedParser[disnake.Role]):
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     async def loads(
         self,

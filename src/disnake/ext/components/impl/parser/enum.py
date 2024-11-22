@@ -36,7 +36,11 @@ def _get_enum_type(enum_class: typing.Type[_AnyEnum]) -> typing.Optional[type]:
 
 
 @parser_base.register_parser_for(
-    enum.Enum, disnake.Enum, enum.Flag, disnake.flags.BaseFlags
+    enum.Enum,
+    disnake.Enum,
+    enum.Flag,
+    disnake.flags.BaseFlags,
+    priority=20,
 )
 class EnumParser(parser_base.SourcedParser[_EnumT]):
     """Parser type for enums and flags.

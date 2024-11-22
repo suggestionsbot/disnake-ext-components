@@ -44,7 +44,7 @@ class PartialEmojiParser(parser_base.Parser[disnake.PartialEmoji]):
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(self, argument: str) -> disnake.PartialEmoji:
         """Load a partial emoji from a string.
@@ -103,7 +103,7 @@ class GetEmojiParser(parser_base.SourcedParser[disnake.Emoji]):
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(self, argument: str, *, source: parser_source.BotAware) -> disnake.Emoji:
         """Load an emoji from a string.
@@ -169,7 +169,7 @@ class GetStickerParser(parser_base.SourcedParser[disnake.Sticker]):
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(
         self,
@@ -246,7 +246,7 @@ class EmojiParser(parser_base.SourcedParser[disnake.Emoji]):
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     async def loads(
         self, argument: str, *, source: parser_source.BotAndGuildAware
@@ -333,7 +333,7 @@ class StickerParser(parser_base.SourcedParser[disnake.Sticker]):
     """
 
     def __init__(self, int_parser: typing.Optional[builtins_parsers.IntParser] = None):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     async def loads(
         self, argument: str, *, source: parser_source.BotAndGuildAware

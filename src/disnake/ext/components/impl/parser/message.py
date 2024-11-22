@@ -58,7 +58,7 @@ class PartialMessageParser(parser_base.SourcedParser[disnake.PartialMessage]):
         *,
         channel: typing.Optional[AnyChannel] = None,
     ) -> None:
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.channel = channel
 
     def loads(self, argument: str, *, source: object) -> disnake.PartialMessage:
@@ -159,7 +159,7 @@ class GetMessageParser(parser_base.SourcedParser[disnake.Message]):
         *,
         allow_fallback: bool = False,
     ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     def loads(
@@ -264,7 +264,7 @@ class MessageParser(parser_base.SourcedParser[disnake.Message]):
         *,
         allow_fallback: bool = False,
     ):
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     async def loads(

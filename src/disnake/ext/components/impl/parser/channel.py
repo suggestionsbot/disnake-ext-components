@@ -132,7 +132,7 @@ class GetChannelParserBase(parser_base.SourcedParser[_ChannelT]):
             )
             raise TypeError(msg)
 
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     def loads(
@@ -265,7 +265,7 @@ class ChannelParserBase(parser_base.SourcedParser[_ChannelT]):
             )
             raise TypeError(msg)
 
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
         self.allow_fallback = allow_fallback
 
     async def loads(
@@ -767,7 +767,7 @@ class PartialMessageableParser(parser_base.SourcedParser[disnake.PartialMessagea
         int_parser: typing.Optional[builtins_parsers.IntParser] = None,
     ) -> None:
         self.channel_type = channel_type
-        self.int_parser = int_parser or builtins_parsers.IntParser.default()
+        self.int_parser = int_parser or builtins_parsers.IntParser.default(int)
 
     def loads(
         self, argument: str, *, source: parser_source.BotAware

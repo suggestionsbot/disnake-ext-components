@@ -51,7 +51,8 @@ class ComponentFactory(
             parser = fields.get_parser(field)
 
             if not parser:
-                parser = parser_base.get_parser(field.type or str).default()
+                parser_type = field.type or str
+                parser = parser_base.get_parser(parser_type).default(parser_type)
 
             assert isinstance(parser, (parser_base.Parser, parser_base.SourcedParser))
             parsers[field.name] = parser
