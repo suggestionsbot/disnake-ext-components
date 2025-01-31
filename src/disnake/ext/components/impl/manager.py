@@ -396,8 +396,8 @@ class ComponentManager(component_api.ComponentManager):
         self, custom_id: str
     ) -> typing.Tuple[str, typing.Sequence[str]]:
         # <<docstring inherited from api.components.ComponentManager>>
-
-        name, *params = custom_id.split(self.sep)
+        sep = self.sep if self.sep in custom_id else ":"
+        name, *params = custom_id.split(sep)
 
         if self.count and name.endswith(_COUNT_CHARS):
             # Count is always the single last character in the name part.
